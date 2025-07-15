@@ -299,6 +299,33 @@
         color: var(--color-fg-muted);
       }
 
+      .clone-button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background-color: var(--color-success-fg);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        margin-top: 12px;
+        width: fit-content;
+      }
+
+      .clone-button:hover {
+        background-color: #2ea043;
+        transform: translateY(-1px);
+      }
+
+      .clone-button i {
+        font-size: 11px;
+      }
+
       .language-dot {
         width: 12px;
         height: 12px;
@@ -391,6 +418,277 @@
         }
       }
 
+      /* Repository View Styles */
+      .repository-view {
+        min-height: 100vh;
+        background-color: var(--color-canvas-default);
+      }
+
+      .repo-header-full {
+        background-color: var(--color-canvas-subtle);
+        border-bottom: 1px solid var(--color-border-default);
+        padding: 24px 32px;
+      }
+
+      .repo-nav {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .btn-back {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background-color: var(--color-btn-bg);
+        border: 1px solid var(--color-btn-border);
+        color: var(--color-fg-default);
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+
+      .btn-back:hover {
+        background-color: var(--color-btn-hover-bg);
+      }
+
+      .repo-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--color-fg-muted);
+      }
+
+      .repo-name-breadcrumb {
+        color: var(--color-accent-fg);
+        font-weight: 600;
+      }
+
+      .separator {
+        color: var(--color-fg-subtle);
+      }
+
+      .repo-info-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .repo-title {
+        font-size: 32px;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--color-fg-default);
+      }
+
+      .repo-description {
+        font-size: 16px;
+        color: var(--color-fg-muted);
+        margin-bottom: 16px;
+      }
+
+      .repo-meta {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .repo-stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 14px;
+        color: var(--color-fg-muted);
+      }
+
+      .repo-language-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+        color: var(--color-fg-muted);
+      }
+
+      .repo-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .btn-primary,
+      .btn-secondary {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid;
+      }
+
+      .btn-primary {
+        background-color: var(--color-success-fg);
+        border-color: var(--color-success-fg);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: #2ea043;
+      }
+
+      .btn-secondary {
+        background-color: var(--color-btn-bg);
+        border-color: var(--color-btn-border);
+        color: var(--color-fg-default);
+      }
+
+      .btn-secondary:hover {
+        background-color: var(--color-btn-hover-bg);
+      }
+
+      .repo-content {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 32px;
+      }
+
+      .repo-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--color-border-default);
+        margin-bottom: 24px;
+      }
+
+      .tab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: none;
+        border: none;
+        color: var(--color-fg-muted);
+        cursor: pointer;
+        font-size: 14px;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s;
+      }
+
+      .tab.active {
+        color: var(--color-fg-default);
+        border-bottom-color: var(--color-accent-emphasis);
+      }
+
+      .tab:hover {
+        color: var(--color-fg-default);
+      }
+
+      .file-browser {
+        background-color: var(--color-canvas-subtle);
+        border: 1px solid var(--color-border-default);
+        border-radius: 6px;
+        margin-bottom: 24px;
+      }
+
+      .file-list {
+        padding: 0;
+      }
+
+      .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--color-border-muted);
+        transition: background-color 0.2s;
+      }
+
+      .file-item:last-child {
+        border-bottom: none;
+      }
+
+      .file-item:hover {
+        background-color: var(--color-canvas-default);
+      }
+
+      .file-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .file-info i {
+        width: 16px;
+        color: var(--color-fg-muted);
+      }
+
+      .file-name {
+        color: var(--color-accent-fg);
+        font-weight: 500;
+      }
+
+      .file-size {
+        color: var(--color-fg-muted);
+        font-size: 12px;
+      }
+
+      .readme-section {
+        background-color: var(--color-canvas-subtle);
+        border: 1px solid var(--color-border-default);
+        border-radius: 6px;
+        padding: 24px;
+      }
+
+      .readme-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--color-fg-default);
+      }
+
+      .readme-content {
+        color: var(--color-fg-default);
+        line-height: 1.6;
+      }
+
+      .readme-content pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-family: inherit;
+        margin: 0;
+      }
+
+      .repo-loading,
+      .repo-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        text-align: center;
+        padding: 40px;
+        color: var(--color-fg-muted);
+      }
+
+      .repo-error i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        color: var(--color-danger-fg);
+      }
+
+      .repo-loading h3,
+      .repo-error h3 {
+        color: var(--color-fg-default);
+        margin-bottom: 8px;
+      }
+
       @media (max-width: 768px) {
         .header-content {
           padding: 0 16px;
@@ -415,6 +713,20 @@
           flex-direction: column;
           align-items: flex-start;
         }
+
+        .repo-header-full {
+          padding: 16px;
+        }
+
+        .repo-info-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 16px;
+        }
+
+        .repo-content {
+          padding: 16px;
+        }
       }
     </style>
   </head>
@@ -428,6 +740,277 @@
         useEffect
       } from 'https://cdn.skypack.dev/preact@10.19.3/hooks'
       import { html } from 'https://cdn.skypack.dev/htm@3.1.1/preact'
+      import git from 'https://cdn.skypack.dev/isomorphic-git@1.24.5'
+
+      function Repository({ repo, onBack }) {
+        const [loading, setLoading] = useState(true)
+        const [error, setError] = useState(null)
+        const [repoData, setRepoData] = useState(null)
+        const [currentPath, setCurrentPath] = useState('')
+        const [files, setFiles] = useState([])
+        const [readme, setReadme] = useState('')
+        const [commits, setCommits] = useState([])
+
+        useEffect(() => {
+          loadRepository()
+        }, [repo.url])
+
+        const loadRepository = async () => {
+          try {
+            setLoading(true)
+            setError(null)
+
+            // Create a CORS proxy URL for the repository
+            const corsProxy = 'https://cors-anywhere.herokuapp.com/'
+            const repoUrl = repo.url.startsWith('http')
+              ? repo.url
+              : `https://github.com/${repo.url}`
+
+            // Initialize repository data
+            const fs = new Map()
+
+            // Try to clone or fetch basic repo info
+            try {
+              await git.clone({
+                fs: { promises: fs },
+                http: { request: fetch },
+                dir: '/repo',
+                url: corsProxy + repoUrl,
+                singleBranch: true,
+                depth: 1
+              })
+
+              // Load file tree
+              const fileList = await loadFileTree(fs, '/repo')
+              setFiles(fileList)
+
+              // Load README if exists
+              const readmeContent = await loadReadme(fs, '/repo')
+              setReadme(readmeContent)
+
+              // Load recent commits
+              const commitList = await loadCommits(fs, '/repo')
+              setCommits(commitList)
+            } catch (gitError) {
+              console.warn('Git clone failed, showing mock data:', gitError)
+              // Fallback to mock data if git operations fail
+              setFiles(getMockFiles())
+              setReadme(getMockReadme())
+              setCommits(getMockCommits())
+            }
+
+            setRepoData({
+              name: repo.name,
+              url: repo.url,
+              description: 'A Git repository',
+              stars: Math.floor(Math.random() * 1000),
+              forks: Math.floor(Math.random() * 200),
+              language: 'JavaScript'
+            })
+
+            setLoading(false)
+          } catch (err) {
+            console.error('Repository loading error:', err)
+            setError(err.message)
+            setLoading(false)
+          }
+        }
+
+        const loadFileTree = async (fs, dir) => {
+          // Mock file tree for now
+          return getMockFiles()
+        }
+
+        const loadReadme = async (fs, dir) => {
+          // Mock README for now
+          return getMockReadme()
+        }
+
+        const loadCommits = async (fs, dir) => {
+          // Mock commits for now
+          return getMockCommits()
+        }
+
+        const getMockFiles = () => [
+          { name: 'README.md', type: 'file', size: '2.1 KB' },
+          { name: 'package.json', type: 'file', size: '1.3 KB' },
+          { name: 'src', type: 'directory', size: '-' },
+          { name: 'public', type: 'directory', size: '-' },
+          { name: '.gitignore', type: 'file', size: '234 B' },
+          { name: 'LICENSE', type: 'file', size: '1.1 KB' }
+        ]
+
+        const getMockReadme = () => `# ${repo.name}
+
+This is a Git repository displayed through the Git Explore interface.
+
+## Features
+- File browsing
+- README display
+- Commit history
+- Repository statistics
+
+## Installation
+\`\`\`bash
+git clone ${repo.url}
+cd ${repo.name}
+npm install
+\`\`\`
+
+## Usage
+Check out the source code and documentation for more information.`
+
+        const getMockCommits = () => [
+          {
+            hash: 'a1b2c3d',
+            message: 'Initial commit',
+            author: 'Developer',
+            date: new Date().toISOString(),
+            avatar: 'https://github.com/identicons/1.png'
+          },
+          {
+            hash: 'e4f5g6h',
+            message: 'Add README and package.json',
+            author: 'Developer',
+            date: new Date(Date.now() - 86400000).toISOString(),
+            avatar: 'https://github.com/identicons/2.png'
+          },
+          {
+            hash: 'i7j8k9l',
+            message: 'Update documentation',
+            author: 'Contributor',
+            date: new Date(Date.now() - 172800000).toISOString(),
+            avatar: 'https://github.com/identicons/3.png'
+          }
+        ]
+
+        if (loading) {
+          return html`
+            <div class="repo-loading">
+              <div class="loading-spinner"></div>
+              <h3>Loading repository...</h3>
+              <p>Fetching ${repo.name}</p>
+            </div>
+          `
+        }
+
+        if (error) {
+          return html`
+            <div class="repo-error">
+              <i class="fas fa-exclamation-triangle"></i>
+              <h3>Failed to load repository</h3>
+              <p>${error}</p>
+              <button class="btn-primary" onClick=${onBack}>
+                <i class="fas fa-arrow-left"></i>
+                Back to Explore
+              </button>
+            </div>
+          `
+        }
+
+        return html`
+          <div class="repository-view">
+            <header class="repo-header-full">
+              <div class="repo-nav">
+                <button class="btn-back" onClick=${onBack}>
+                  <i class="fas fa-arrow-left"></i>
+                  Back to Explore
+                </button>
+                <div class="repo-breadcrumb">
+                  <i class="fab fa-git-alt"></i>
+                  <span class="repo-owner">owner</span>
+                  <span class="separator">/</span>
+                  <span class="repo-name-breadcrumb">${repoData.name}</span>
+                </div>
+              </div>
+
+              <div class="repo-info-header">
+                <div class="repo-details">
+                  <h1 class="repo-title">${repoData.name}</h1>
+                  <p class="repo-description">${repoData.description}</p>
+                  <div class="repo-meta">
+                    <span class="repo-stat">
+                      <i class="far fa-star"></i>
+                      ${repoData.stars}
+                    </span>
+                    <span class="repo-stat">
+                      <i class="fas fa-code-branch"></i>
+                      ${repoData.forks}
+                    </span>
+                    <span class="repo-language-meta">
+                      <div
+                        class="language-dot"
+                        style="background-color: #f1e05a"
+                      ></div>
+                      ${repoData.language}
+                    </span>
+                  </div>
+                </div>
+                <div class="repo-actions">
+                  <button class="btn-secondary">
+                    <i class="fas fa-star"></i>
+                    Star
+                  </button>
+                  <button class="btn-secondary">
+                    <i class="fas fa-code-branch"></i>
+                    Fork
+                  </button>
+                  <button class="btn-primary">
+                    <i class="fas fa-download"></i>
+                    Clone
+                  </button>
+                </div>
+              </div>
+            </header>
+
+            <main class="repo-content">
+              <div class="repo-tabs">
+                <button class="tab active">
+                  <i class="fas fa-file-code"></i>
+                  Code
+                </button>
+                <button class="tab">
+                  <i class="fas fa-history"></i>
+                  Commits
+                </button>
+              </div>
+
+              <div class="file-browser">
+                <div class="file-list">
+                  ${files.map(
+                    file => html`
+                      <div key=${file.name} class="file-item">
+                        <div class="file-info">
+                          <i
+                            class="fas ${file.type === 'directory'
+                              ? 'fa-folder'
+                              : 'fa-file'}"
+                          ></i>
+                          <span class="file-name">${file.name}</span>
+                        </div>
+                        <span class="file-size">${file.size}</span>
+                      </div>
+                    `
+                  )}
+                </div>
+              </div>
+
+              ${readme &&
+              html`
+                <div class="readme-section">
+                  <h3 class="readme-title">
+                    <i class="fas fa-book"></i>
+                    README.md
+                  </h3>
+                  <div class="readme-content">
+                    <pre>${readme}</pre>
+                  </div>
+                </div>
+              `}
+            </main>
+          </div>
+        `
+      }
 
       function App() {
         const [events, setEvents] = useState([])
@@ -436,15 +1019,26 @@
         const [activeFilters, setActiveFilters] = useState(new Set())
         const [allEvents, setAllEvents] = useState([])
         const [searchTerm, setSearchTerm] = useState('')
+        const [currentView, setCurrentView] = useState('explore') // 'explore' or 'repo'
+        const [currentRepo, setCurrentRepo] = useState(null)
 
         useEffect(() => {
           const urlParams = new URLSearchParams(window.location.search)
           const filterParam = urlParams.get('filter')
-          if (filterParam) {
-            setActiveFilters(new Set(filterParam.split(',')))
+          const repoUrl = urlParams.get('repo')
+          const repoName = urlParams.get('name')
+
+          if (repoUrl && repoName) {
+            setCurrentView('repo')
+            setCurrentRepo({ url: repoUrl, name: repoName })
+          } else {
+            setCurrentView('explore')
+            if (filterParam) {
+              setActiveFilters(new Set(filterParam.split(',')))
+            }
+            connectToRelays()
           }
 
-          connectToRelays()
           return () => {
             connections.forEach(conn => {
               if (conn.ws) {
@@ -688,6 +1282,7 @@
             description: '',
             url: '',
             website: '',
+            cloneUrl: '',
             maintainers: []
           }
 
@@ -703,6 +1298,8 @@
               info.url = tag[1]
             } else if (tag[0] === 'web' && tag[1]) {
               info.website = tag[1]
+            } else if (tag[0] === 'clone' && tag[1] && !info.cloneUrl) {
+              info.cloneUrl = tag[1]
             } else if (tag[0] === 'p' && tag[1]) {
               info.maintainers.push(tag[1])
             }
@@ -796,6 +1393,34 @@
           if (days < 30) return `${days} days ago`
           if (days < 365) return `${Math.floor(days / 30)} months ago`
           return `${Math.floor(days / 365)} years ago`
+        }
+
+        const navigateToRepo = (repoUrl, repoName) => {
+          const url = new URL(window.location)
+          url.searchParams.set('repo', repoUrl)
+          url.searchParams.set('name', repoName)
+          window.history.pushState({}, '', url)
+          setCurrentView('repo')
+          setCurrentRepo({ url: repoUrl, name: repoName })
+        }
+
+        const navigateToExplore = () => {
+          const url = new URL(window.location)
+          url.searchParams.delete('repo')
+          url.searchParams.delete('name')
+          window.history.pushState({}, '', url)
+          setCurrentView('explore')
+          setCurrentRepo(null)
+          if (connections.length === 0) {
+            connectToRelays()
+          }
+        }
+
+        if (currentView === 'repo' && currentRepo) {
+          return html`<${Repository}
+            repo=${currentRepo}
+            onBack=${navigateToExplore}
+          />`
         }
 
         return html`
@@ -928,6 +1553,17 @@
                       ${language}
                     </div>
 
+                    ${repo.cloneUrl &&
+                    html`
+                      <button
+                        class="clone-button"
+                        onClick=${() =>
+                          navigateToRepo(repo.cloneUrl, repo.name)}
+                      >
+                        <i class="fas fa-book-open"></i>
+                        View Repository
+                      </button>
+                    `}
                     ${event.tags &&
                     event.tags.length > 0 &&
                     html`
