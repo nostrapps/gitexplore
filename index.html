@@ -768,6 +768,106 @@
         margin-bottom: 8px;
       }
 
+      /* File Modal Styles */
+      .file-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+      }
+
+      .file-modal {
+        background-color: var(--color-canvas-default);
+        border: 1px solid var(--color-border-default);
+        border-radius: 8px;
+        width: 90%;
+        max-width: 900px;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      }
+
+      .file-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        background-color: var(--color-canvas-subtle);
+        border-bottom: 1px solid var(--color-border-default);
+      }
+
+      .file-modal-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .file-modal-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--color-fg-default);
+      }
+
+      .file-modal-size {
+        font-size: 12px;
+        color: var(--color-fg-muted);
+        background-color: var(--color-btn-bg);
+        padding: 2px 8px;
+        border-radius: 4px;
+      }
+
+      .file-modal-close {
+        background: none;
+        border: none;
+        color: var(--color-fg-muted);
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+        transition: all 0.2s;
+        font-size: 16px;
+      }
+
+      .file-modal-close:hover {
+        background-color: var(--color-btn-bg);
+        color: var(--color-fg-default);
+      }
+
+      .file-modal-content {
+        flex: 1;
+        overflow: auto;
+        padding: 0;
+      }
+
+      .file-modal-content pre {
+        margin: 0;
+        padding: 20px;
+        background-color: var(--color-canvas-default);
+        color: var(--color-fg-default);
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono',
+          monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      .file-modal-content code {
+        background: none;
+        padding: 0;
+        color: inherit;
+        font-family: inherit;
+      }
+
       @media (max-width: 768px) {
         .header-content {
           padding: 0 16px;
@@ -806,6 +906,20 @@
         .repo-content {
           padding: 16px;
         }
+
+        .file-modal {
+          width: 95%;
+          max-height: 85vh;
+        }
+
+        .file-modal-header {
+          padding: 12px 16px;
+        }
+
+        .file-modal-content pre {
+          padding: 16px;
+          font-size: 12px;
+        }
       }
     </style>
   </head>
@@ -830,10 +944,35 @@
         const [readme, setReadme] = useState('')
         const [commits, setCommits] = useState([])
         const [pathHistory, setPathHistory] = useState([''])
+        const [fileModal, setFileModal] = useState({
+          isOpen: false,
+          file: null,
+          content: ''
+        })
 
         useEffect(() => {
           loadRepository()
         }, [repo.url])
+
+        useEffect(() => {
+          const handleKeyDown = e => {
+            if (e.key === 'Escape' && fileModal.isOpen) {
+              closeFileModal()
+            }
+          }
+
+          if (fileModal.isOpen) {
+            document.addEventListener('keydown', handleKeyDown)
+            document.body.style.overflow = 'hidden'
+          } else {
+            document.body.style.overflow = ''
+          }
+
+          return () => {
+            document.removeEventListener('keydown', handleKeyDown)
+            document.body.style.overflow = ''
+          }
+        }, [fileModal.isOpen])
 
         const loadRepository = async () => {
           try {
@@ -976,6 +1115,130 @@
             yaml: 'fa-file-code'
           }
           return iconMap[extension] || 'fa-file'
+        }
+
+        const isFileViewable = (fileName, size) => {
+          const extension = fileName.toLowerCase().split('.').pop()
+          const viewableExtensions = [
+            'js',
+            'jsx',
+            'ts',
+            'tsx',
+            'json',
+            'md',
+            'html',
+            'css',
+            'scss',
+            'txt',
+            'py',
+            'java',
+            'cpp',
+            'c',
+            'php',
+            'rb',
+            'go',
+            'rs',
+            'xml',
+            'yml',
+            'yaml',
+            'gitignore'
+          ]
+          const sizeInKB = parseFloat(size.replace(/[^\d.]/g, ''))
+          return viewableExtensions.includes(extension) && sizeInKB < 100
+        }
+
+        const generateFileContent = fileName => {
+          if (fileName === 'package.json') {
+            return (
+              '{\n  "name": "' +
+              repo.name +
+              '",\n  "version": "1.0.0",\n  "description": "A Git repository",\n  "main": "index.js",\n  "scripts": {\n    "start": "node index.js",\n    "test": "jest"\n  },\n  "dependencies": {\n    "express": "^4.18.2",\n    "react": "^18.2.0"\n  },\n  "author": "Developer",\n  "license": "MIT"\n}'
+            )
+          }
+
+          if (fileName === 'README.md') {
+            return (
+              '# ' +
+              repo.name +
+              '\n\nThis is a Git repository displayed through the Git Explore interface.\n\n## Features\n- File browsing with directory navigation\n- README display\n- File content viewer\n- Repository statistics\n\n## Installation\n```bash\ngit clone ' +
+              repo.url +
+              '\ncd ' +
+              repo.name +
+              '\nnpm install\n```\n\n## Usage\nCheck out the source code and documentation for more information.'
+            )
+          }
+
+          if (fileName === '.gitignore') {
+            return '# Dependencies\nnode_modules/\nnpm-debug.log*\n\n# Build outputs\n/build\n/dist\n\n# Environment variables\n.env\n.env.local\n\n# IDE files\n.vscode/\n.idea/\n\n# OS generated files\n.DS_Store\nThumbs.db'
+          }
+
+          const extension = fileName.toLowerCase().split('.').pop()
+          const baseName = fileName.split('.')[0]
+
+          if (extension === 'js' || extension === 'jsx') {
+            return (
+              "import React from 'react';\nimport { useState, useEffect } from 'react';\n\nconst " +
+              baseName +
+              " = () => {\n  const [data, setData] = useState([]);\n  const [loading, setLoading] = useState(true);\n\n  useEffect(() => {\n    fetchData();\n  }, []);\n\n  const fetchData = async () => {\n    try {\n      const response = await fetch('/api/data');\n      const result = await response.json();\n      setData(result);\n    } catch (error) {\n      console.error('Error fetching data:', error);\n    }\n  };\n\n  return (\n    <div className=\"" +
+              baseName +
+              '">\n      <h2>' +
+              baseName +
+              '</h2>\n      {data.map(item => (\n        <div key={item.id}>\n          {item.name}\n        </div>\n      ))}\n    </div>\n  );\n};\n\nexport default ' +
+              baseName +
+              ';'
+            )
+          }
+
+          if (extension === 'css') {
+            return (
+              '.' +
+              baseName +
+              ' {\n  display: flex;\n  flex-direction: column;\n  padding: 20px;\n  background-color: #ffffff;\n  border-radius: 8px;\n  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);\n}\n\n.' +
+              baseName +
+              ' h1, .' +
+              baseName +
+              ' h2 {\n  color: #333333;\n  margin-bottom: 16px;\n}\n\n.' +
+              baseName +
+              ' p {\n  line-height: 1.6;\n  color: #666666;\n  margin-bottom: 12px;\n}'
+            )
+          }
+
+          if (extension === 'html') {
+            return (
+              '<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>' +
+              baseName +
+              '</title>\n</head>\n<body>\n    <div class="container">\n        <header>\n            <h1>Welcome to ' +
+              baseName +
+              '</h1>\n        </header>\n        <main>\n            <p>This is a sample HTML file.</p>\n        </main>\n    </div>\n</body>\n</html>'
+            )
+          }
+
+          return (
+            '// ' +
+            fileName +
+            '\n// Generated content for ' +
+            repo.name +
+            '\n\nconst config = {\n  name: "' +
+            baseName +
+            '",\n  version: "1.0.0",\n  description: "Auto-generated configuration file"\n};\n\nexport default config;'
+          )
+        }
+
+        const openFileModal = file => {
+          const content = generateFileContent(file.name)
+          setFileModal({
+            isOpen: true,
+            file: file,
+            content: content
+          })
+        }
+
+        const closeFileModal = () => {
+          setFileModal({
+            isOpen: false,
+            file: null,
+            content: ''
+          })
         }
 
         const getMockFiles = (path = '') => {
@@ -1192,11 +1455,16 @@ Check out the source code and documentation for more information.`
                     file => html`
                       <div
                         key=${file.name}
-                        class="file-item ${file.type === 'directory'
+                        class="file-item ${file.type === 'directory' ||
+                        (file.type === 'file' &&
+                          isFileViewable(file.name, file.size))
                           ? 'clickable'
                           : ''}"
                         onClick=${file.type === 'directory'
                           ? () => navigateToDirectory(file.name)
+                          : file.type === 'file' &&
+                            isFileViewable(file.name, file.size)
+                          ? () => openFileModal(file)
                           : null}
                       >
                         <div class="file-info">
@@ -1227,6 +1495,31 @@ Check out the source code and documentation for more information.`
                 </div>
               `}
             </main>
+
+            ${fileModal.isOpen &&
+            html`
+              <div class="file-modal-overlay" onClick=${closeFileModal}>
+                <div class="file-modal" onClick=${e => e.stopPropagation()}>
+                  <div class="file-modal-header">
+                    <div class="file-modal-info">
+                      <i class="fas ${getFileIcon(fileModal.file.name)}"></i>
+                      <span class="file-modal-name"
+                        >${fileModal.file.name}</span
+                      >
+                      <span class="file-modal-size"
+                        >${fileModal.file.size}</span
+                      >
+                    </div>
+                    <button class="file-modal-close" onClick=${closeFileModal}>
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                  <div class="file-modal-content">
+                    <pre><code>${fileModal.content}</code></pre>
+                  </div>
+                </div>
+              </div>
+            `}
           </div>
         `
       }
