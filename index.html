@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Git Explore - Discover Repositories</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --color-canvas-default: #0d1117;
+        --color-canvas-subtle: #161b22;
+        --color-border-default: #30363d;
+        --color-border-muted: #21262d;
+        --color-fg-default: #e6edf3;
+        --color-fg-muted: #7d8590;
+        --color-fg-subtle: #6e7681;
+        --color-accent-fg: #58a6ff;
+        --color-accent-emphasis: #1f6feb;
+        --color-success-fg: #3fb950;
+        --color-danger-fg: #f85149;
+        --color-warning-fg: #d29922;
+        --color-btn-bg: #21262d;
+        --color-btn-border: #30363d;
+        --color-btn-hover-bg: #30363d;
+        --color-input-bg: #0d1117;
+        --color-input-border: #30363d;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans',
+          Helvetica, Arial, sans-serif;
+        background-color: var(--color-canvas-default);
+        color: var(--color-fg-default);
+        line-height: 1.5;
+        min-height: 100vh;
+      }
+
+      .header {
+        background-color: var(--color-canvas-subtle);
+        border-bottom: 1px solid var(--color-border-default);
+        padding: 16px 0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .header-content {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--color-fg-default);
+        text-decoration: none;
+      }
+
+      .logo i {
+        font-size: 24px;
+      }
+
+      .search-container {
+        flex: 1;
+        max-width: 400px;
+        margin: 0 32px;
+        position: relative;
+      }
+
+      .search-input {
+        width: 100%;
+        padding: 8px 12px 8px 40px;
+        background-color: var(--color-input-bg);
+        border: 1px solid var(--color-input-border);
+        border-radius: 6px;
+        color: var(--color-fg-default);
+        font-size: 14px;
+      }
+
+      .search-input:focus {
+        outline: none;
+        border-color: var(--color-accent-emphasis);
+        box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.3);
+      }
+
+      .search-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--color-fg-muted);
+      }
+
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background-color: var(--color-btn-bg);
+        border: 1px solid var(--color-btn-border);
+        border-radius: 6px;
+        font-size: 12px;
+        color: var(--color-fg-muted);
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: var(--color-success-fg);
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .main-content {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 32px;
+      }
+
+      .page-header {
+        margin-bottom: 32px;
+      }
+
+      .page-title {
+        font-size: 32px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .page-description {
+        color: var(--color-fg-muted);
+        font-size: 16px;
+        margin-bottom: 24px;
+      }
+
+      .filters {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+      }
+
+      .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .filter-label {
+        color: var(--color-fg-muted);
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .filter-tag {
+        background-color: var(--color-btn-bg);
+        border: 1px solid var(--color-btn-border);
+        border-radius: 16px;
+        padding: 4px 12px;
+        font-size: 12px;
+        color: var(--color-fg-default);
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .filter-tag:hover {
+        background-color: var(--color-btn-hover-bg);
+      }
+
+      .filter-tag.active {
+        background-color: var(--color-accent-emphasis);
+        border-color: var(--color-accent-emphasis);
+        color: white;
+      }
+
+      .clear-filters {
+        background-color: transparent;
+        border: 1px solid var(--color-danger-fg);
+        color: var(--color-danger-fg);
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .clear-filters:hover {
+        background-color: var(--color-danger-fg);
+        color: white;
+      }
+
+      .repositories-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 24px;
+      }
+
+      .repository-card {
+        background-color: var(--color-canvas-subtle);
+        border: 1px solid var(--color-border-default);
+        border-radius: 8px;
+        padding: 20px;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+
+      .repository-card:hover {
+        border-color: var(--color-border-muted);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      }
+
+      .repo-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .repo-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--color-accent-fg);
+        text-decoration: none;
+        margin-bottom: 4px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .repo-name:hover {
+        text-decoration: underline;
+      }
+
+      .repo-visibility {
+        font-size: 12px;
+        color: var(--color-fg-muted);
+        background-color: var(--color-btn-bg);
+        border: 1px solid var(--color-btn-border);
+        border-radius: 12px;
+        padding: 2px 8px;
+      }
+
+      .repo-description {
+        color: var(--color-fg-muted);
+        font-size: 14px;
+        margin-bottom: 16px;
+        line-height: 1.4;
+      }
+
+      .repo-stats {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 12px;
+        font-size: 12px;
+        color: var(--color-fg-muted);
+      }
+
+      .repo-stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .repo-language {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--color-fg-muted);
+      }
+
+      .language-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .repo-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--color-border-muted);
+      }
+
+      .repo-maintainer {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--color-fg-muted);
+        cursor: pointer;
+      }
+
+      .repo-maintainer:hover {
+        color: var(--color-accent-fg);
+      }
+
+      .repo-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .repo-tag {
+        background-color: rgba(88, 166, 255, 0.1);
+        color: var(--color-accent-fg);
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-size: 11px;
+        cursor: pointer;
+        border: 1px solid transparent;
+      }
+
+      .repo-tag:hover {
+        border-color: var(--color-accent-fg);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: var(--color-fg-muted);
+      }
+
+      .empty-state i {
+        font-size: 48px;
+        margin-bottom: 16px;
+        color: var(--color-fg-subtle);
+      }
+
+      .empty-state h3 {
+        font-size: 18px;
+        margin-bottom: 8px;
+        color: var(--color-fg-default);
+      }
+
+      .loading-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: var(--color-fg-muted);
+      }
+
+      .loading-spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid var(--color-border-default);
+        border-top: 3px solid var(--color-accent-fg);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .header-content {
+          padding: 0 16px;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .search-container {
+          margin: 0;
+          max-width: none;
+        }
+
+        .main-content {
+          padding: 16px;
+        }
+
+        .repositories-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .filters {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script type="module">
+      import { h, render } from 'https://cdn.skypack.dev/preact@10.19.3'
+      import {
+        useState,
+        useEffect
+      } from 'https://cdn.skypack.dev/preact@10.19.3/hooks'
+      import { html } from 'https://cdn.skypack.dev/htm@3.1.1/preact'
+
+      function App() {
+        const [events, setEvents] = useState([])
+        const [status, setStatus] = useState('connecting')
+        const [connections, setConnections] = useState([])
+        const [activeFilters, setActiveFilters] = useState(new Set())
+        const [allEvents, setAllEvents] = useState([])
+        const [searchTerm, setSearchTerm] = useState('')
+
+        useEffect(() => {
+          const urlParams = new URLSearchParams(window.location.search)
+          const filterParam = urlParams.get('filter')
+          if (filterParam) {
+            setActiveFilters(new Set(filterParam.split(',')))
+          }
+
+          connectToRelays()
+          return () => {
+            connections.forEach(conn => {
+              if (conn.ws) {
+                conn.ws.close()
+              }
+            })
+          }
+        }, [])
+
+        useEffect(() => {
+          let filtered = allEvents
+
+          // Apply search filter
+          if (searchTerm) {
+            filtered = filtered.filter(event => {
+              const repo = parseRepoInfo(event)
+              return (
+                repo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                repo.description
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase()) ||
+                repo.url.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+            })
+          }
+
+          // Apply tag filters (AND logic)
+          if (activeFilters.size > 0) {
+            filtered = filtered.filter(event => {
+              return Array.from(activeFilters).every(filterTag => {
+                if (filterTag.startsWith('pubkey=')) {
+                  const pubkey = filterTag.substring('pubkey='.length)
+                  return event.pubkey === pubkey
+                }
+                return event.tags?.some(tag => {
+                  const tagString = `${tag[0]}=${tag[1] || ''}`
+                  return tagString === filterTag
+                })
+              })
+            })
+          }
+
+          setEvents(filtered)
+        }, [allEvents, activeFilters, searchTerm])
+
+        const relays = [
+          'wss://relay.nostr.net/',
+          'wss://nos.lol/',
+          'wss://relay.damus.io/',
+          'wss://nostr.wine/',
+          'wss://relay.snort.social/',
+          'wss://nostr.mom/',
+          'wss://relay.nostr.band/',
+          'wss://purplepag.es/',
+          'wss://offchain.pub/'
+        ]
+
+        const connectToRelays = () => {
+          setStatus('connecting')
+          const newConnections = []
+
+          relays.forEach((relayUrl, index) => {
+            const websocket = new WebSocket(relayUrl)
+            const conn = { url: relayUrl, ws: websocket, connected: false }
+
+            websocket.onopen = () => {
+              conn.connected = true
+              setConnections(prev => {
+                const updated = [...prev]
+                const existing = updated.find(c => c.url === relayUrl)
+                if (existing) {
+                  existing.connected = true
+                } else {
+                  updated.push(conn)
+                }
+                return updated
+              })
+
+              setStatus(prevStatus =>
+                prevStatus === 'connecting' ? 'connected' : prevStatus
+              )
+
+              const subscription = JSON.stringify([
+                'REQ',
+                `nip34-sub-${index}`,
+                {
+                  kinds: [30617],
+                  limit: 25
+                }
+              ])
+              websocket.send(subscription)
+            }
+
+            websocket.onmessage = event => {
+              try {
+                const message = JSON.parse(event.data)
+                if (message[0] === 'EVENT' && message[2]) {
+                  const nostrEvent = message[2]
+                  if (nostrEvent.kind === 30617) {
+                    setAllEvents(prev => {
+                      const dTag = nostrEvent.tags?.find(
+                        tag => tag[0] === 'd'
+                      )?.[1]
+                      const existingIndex = prev.findIndex(e => {
+                        const existingDTag = e.tags?.find(
+                          tag => tag[0] === 'd'
+                        )?.[1]
+                        return (
+                          e.pubkey === nostrEvent.pubkey &&
+                          existingDTag === dTag
+                        )
+                      })
+
+                      let newEvents
+                      if (existingIndex !== -1) {
+                        newEvents = [
+                          nostrEvent,
+                          ...prev.slice(0, existingIndex),
+                          ...prev.slice(existingIndex + 1)
+                        ]
+                      } else {
+                        newEvents = [nostrEvent, ...prev]
+                      }
+
+                      return newEvents.sort(
+                        (a, b) => b.created_at - a.created_at
+                      )
+                    })
+                  }
+                }
+              } catch (err) {
+                console.error('Error parsing message:', err)
+              }
+            }
+
+            websocket.onerror = () => {
+              conn.connected = false
+            }
+
+            websocket.onclose = () => {
+              conn.connected = false
+              setTimeout(() => {
+                if (!conn.connected) {
+                  connectToSingleRelay(relayUrl, index)
+                }
+              }, 10000)
+            }
+
+            newConnections.push(conn)
+          })
+
+          setConnections(newConnections)
+        }
+
+        const connectToSingleRelay = (relayUrl, index) => {
+          const websocket = new WebSocket(relayUrl)
+
+          websocket.onopen = () => {
+            setConnections(prev => {
+              const updated = [...prev]
+              const existing = updated.find(c => c.url === relayUrl)
+              if (existing) {
+                existing.ws = websocket
+                existing.connected = true
+              }
+              return updated
+            })
+
+            const subscription = JSON.stringify([
+              'REQ',
+              `nip34-sub-${index}`,
+              {
+                kinds: [30617],
+                limit: 100
+              }
+            ])
+            websocket.send(subscription)
+          }
+
+          websocket.onmessage = event => {
+            try {
+              const message = JSON.parse(event.data)
+              if (message[0] === 'EVENT' && message[2]) {
+                const nostrEvent = message[2]
+                if (nostrEvent.kind === 30617) {
+                  setAllEvents(prev => {
+                    const dTag = nostrEvent.tags?.find(
+                      tag => tag[0] === 'd'
+                    )?.[1]
+                    const existingIndex = prev.findIndex(e => {
+                      const existingDTag = e.tags?.find(
+                        tag => tag[0] === 'd'
+                      )?.[1]
+                      return (
+                        e.pubkey === nostrEvent.pubkey && existingDTag === dTag
+                      )
+                    })
+
+                    let newEvents
+                    if (existingIndex !== -1) {
+                      newEvents = [
+                        nostrEvent,
+                        ...prev.slice(0, existingIndex),
+                        ...prev.slice(existingIndex + 1)
+                      ]
+                    } else {
+                      newEvents = [nostrEvent, ...prev]
+                    }
+
+                    return newEvents.sort((a, b) => b.created_at - a.created_at)
+                  })
+                }
+              }
+            } catch (err) {
+              console.error('Error parsing message:', err)
+            }
+          }
+
+          websocket.onerror = () => {
+            setConnections(prev => {
+              const updated = [...prev]
+              const existing = updated.find(c => c.url === relayUrl)
+              if (existing) {
+                existing.connected = false
+              }
+              return updated
+            })
+          }
+
+          websocket.onclose = () => {
+            setTimeout(() => {
+              connectToSingleRelay(relayUrl, index)
+            }, 10000)
+          }
+        }
+
+        const parseRepoInfo = event => {
+          const tags = event.tags || []
+          const info = {
+            name: event.content || 'Untitled Repository',
+            description: '',
+            url: '',
+            website: '',
+            maintainers: []
+          }
+
+          tags.forEach(tag => {
+            if (tag[0] === 'name' && tag[1]) {
+              info.name = tag[1]
+            } else if (tag[0] === 'd' && tag[1]) {
+              if (!info.name || info.name === 'Untitled Repository')
+                info.name = tag[1]
+            } else if (tag[0] === 'description' && tag[1]) {
+              info.description = tag[1]
+            } else if (tag[0] === 'r' && tag[1]) {
+              info.url = tag[1]
+            } else if (tag[0] === 'web' && tag[1]) {
+              info.website = tag[1]
+            } else if (tag[0] === 'p' && tag[1]) {
+              info.maintainers.push(tag[1])
+            }
+          })
+
+          if (!info.description && event.content !== info.name) {
+            info.description = event.content
+          }
+
+          return info
+        }
+
+        const getLanguageColor = language => {
+          const colors = {
+            javascript: '#f1e05a',
+            python: '#3572A5',
+            java: '#b07219',
+            typescript: '#2b7489',
+            rust: '#dea584',
+            go: '#00ADD8',
+            cpp: '#f34b7d',
+            c: '#555555',
+            html: '#e34c26',
+            css: '#563d7c',
+            vue: '#2c3e50',
+            react: '#61DAFB',
+            angular: '#DD0031',
+            php: '#4F5D95',
+            ruby: '#701516',
+            swift: '#ffac45',
+            kotlin: '#F18E33',
+            dart: '#00B4AB',
+            shell: '#89e051',
+            default: '#858585'
+          }
+          return colors[language?.toLowerCase()] || colors.default
+        }
+
+        const getRandomLanguage = () => {
+          const languages = [
+            'JavaScript',
+            'Python',
+            'TypeScript',
+            'Rust',
+            'Go',
+            'Java',
+            'C++',
+            'HTML',
+            'CSS'
+          ]
+          return languages[Math.floor(Math.random() * languages.length)]
+        }
+
+        const getRandomStats = () => ({
+          stars: Math.floor(Math.random() * 1000),
+          forks: Math.floor(Math.random() * 200),
+          issues: Math.floor(Math.random() * 50)
+        })
+
+        const handleTagClick = tag => {
+          const tagString = `${tag[0]}=${tag[1] || ''}`
+          const newFilters = new Set(activeFilters)
+
+          if (newFilters.has(tagString)) {
+            newFilters.delete(tagString)
+          } else {
+            newFilters.add(tagString)
+          }
+
+          setActiveFilters(newFilters)
+        }
+
+        const clearFilters = () => {
+          setActiveFilters(new Set())
+          setSearchTerm('')
+        }
+
+        const getConnectionStatus = () => {
+          const connectedCount = connections.filter(c => c.connected).length
+          return `${connectedCount}/${connections.length} relays`
+        }
+
+        const formatTime = timestamp => {
+          const now = Date.now()
+          const eventTime = timestamp * 1000
+          const diff = now - eventTime
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+          if (days === 0) return 'today'
+          if (days === 1) return '1 day ago'
+          if (days < 30) return `${days} days ago`
+          if (days < 365) return `${Math.floor(days / 30)} months ago`
+          return `${Math.floor(days / 365)} years ago`
+        }
+
+        return html`
+          <header class="header">
+            <div class="header-content">
+              <a href="/" class="logo">
+                <i class="fab fa-git-alt"></i>
+                Git Explore
+              </a>
+
+              <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input
+                  type="text"
+                  class="search-input"
+                  placeholder="Search repositories..."
+                  value=${searchTerm}
+                  onInput=${e => setSearchTerm(e.target.value)}
+                />
+              </div>
+
+              <div class="status-indicator">
+                <div class="status-dot"></div>
+                ${getConnectionStatus()}
+              </div>
+            </div>
+          </header>
+
+          <main class="main-content">
+            <div class="page-header">
+              <h1 class="page-title">Explore Repositories</h1>
+              <p class="page-description">
+                Discover Git repositories announced on the decentralized Nostr
+                network
+              </p>
+            </div>
+
+            ${(activeFilters.size > 0 || searchTerm) &&
+            html`
+              <div class="filters">
+                ${searchTerm &&
+                html`
+                  <div class="filter-group">
+                    <span class="filter-label">Search:</span>
+                    <span class="filter-tag active">${searchTerm}</span>
+                  </div>
+                `}
+                ${activeFilters.size > 0 &&
+                html`
+                  <div class="filter-group">
+                    <span class="filter-label">Filters:</span>
+                    ${Array.from(activeFilters).map(
+                      filter => html`
+                        <span key=${filter} class="filter-tag active">
+                          ${filter}
+                        </span>
+                      `
+                    )}
+                  </div>
+                `}
+                <button class="clear-filters" onClick=${clearFilters}>
+                  Clear all
+                </button>
+              </div>
+            `}
+            ${status === 'connecting' &&
+            html`
+              <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <h3>Connecting to network...</h3>
+                <p>Discovering repositories from Nostr relays</p>
+              </div>
+            `}
+            ${status === 'connected' &&
+            events.length === 0 &&
+            html`
+              <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <h3>No repositories found</h3>
+                <p>Try adjusting your search or filters</p>
+              </div>
+            `}
+
+            <div class="repositories-grid">
+              ${events.map(event => {
+                const repo = parseRepoInfo(event)
+                const stats = getRandomStats()
+                const language = getRandomLanguage()
+                const languageColor = getLanguageColor(language)
+
+                return html`
+                  <div key=${event.id} class="repository-card">
+                    <div class="repo-header">
+                      <div>
+                        <a
+                          href=${repo.url || '#'}
+                          target="_blank"
+                          class="repo-name"
+                        >
+                          <i class="fas fa-book"></i>
+                          ${repo.name}
+                        </a>
+                        <div class="repo-visibility">Public</div>
+                      </div>
+                    </div>
+
+                    ${repo.description &&
+                    html` <p class="repo-description">${repo.description}</p> `}
+
+                    <div class="repo-stats">
+                      <div class="repo-stat">
+                        <i class="far fa-star"></i>
+                        ${stats.stars}
+                      </div>
+                      <div class="repo-stat">
+                        <i class="fas fa-code-branch"></i>
+                        ${stats.forks}
+                      </div>
+                      <div class="repo-stat">
+                        <i class="fas fa-exclamation-circle"></i>
+                        ${stats.issues}
+                      </div>
+                    </div>
+
+                    <div class="repo-language">
+                      <div
+                        class="language-dot"
+                        style="background-color: ${languageColor}"
+                      ></div>
+                      ${language}
+                    </div>
+
+                    ${event.tags &&
+                    event.tags.length > 0 &&
+                    html`
+                      <div class="repo-tags">
+                        ${event.tags
+                          .slice(0, 3)
+                          .map(
+                            (tag, i) => html`
+                              <span
+                                key=${i}
+                                class="repo-tag"
+                                onClick=${() => handleTagClick(tag)}
+                              >
+                                ${tag[0]}:${tag[1]
+                                  ? tag[1].substring(0, 10)
+                                  : ''}${tag[1] && tag[1].length > 10
+                                  ? '...'
+                                  : ''}
+                              </span>
+                            `
+                          )}
+                      </div>
+                    `}
+
+                    <div class="repo-footer">
+                      ${repo.maintainers.length > 0 &&
+                      html`
+                        <div class="repo-maintainer">
+                          <i class="fas fa-user"></i>
+                          ${repo.maintainers[0].substring(0, 8)}...
+                        </div>
+                      `}
+                      <div
+                        style="color: var(--color-fg-muted); font-size: 12px;"
+                      >
+                        Updated ${formatTime(event.created_at)}
+                      </div>
+                    </div>
+                  </div>
+                `
+              })}
+            </div>
+          </main>
+        `
+      }
+
+      render(html`<${App} />`, document.getElementById('app'))
+    </script>
+  </body>
+</html>
