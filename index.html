@@ -768,6 +768,260 @@
         margin-bottom: 8px;
       }
 
+      /* Commits View Styles */
+      .commits-list {
+        background-color: var(--color-canvas-subtle);
+        border: 1px solid var(--color-border-default);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      .commit-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 16px;
+        border-bottom: 1px solid var(--color-border-muted);
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .commit-item:last-child {
+        border-bottom: none;
+      }
+
+      .commit-item:hover {
+        background-color: var(--color-canvas-default);
+      }
+
+      .commit-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background-color: var(--color-accent-emphasis);
+        margin-right: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .commit-info {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .commit-message {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--color-fg-default);
+        margin-bottom: 4px;
+        line-height: 1.3;
+      }
+
+      .commit-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 12px;
+        color: var(--color-fg-muted);
+        flex-wrap: wrap;
+      }
+
+      .commit-author {
+        font-weight: 500;
+      }
+
+      .commit-hash {
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono',
+          monospace;
+        background-color: var(--color-btn-bg);
+        padding: 2px 6px;
+        border-radius: 3px;
+        border: 1px solid var(--color-btn-border);
+      }
+
+      .commit-stats {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+
+      .commit-stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 12px;
+        color: var(--color-fg-muted);
+      }
+
+      /* Commit Detail View */
+      .commit-detail {
+        background-color: var(--color-canvas-subtle);
+        border: 1px solid var(--color-border-default);
+        border-radius: 6px;
+        overflow: hidden;
+      }
+
+      .commit-detail-header {
+        padding: 20px;
+        border-bottom: 1px solid var(--color-border-default);
+        background-color: var(--color-canvas-default);
+      }
+
+      .commit-detail-nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .btn-back-commit {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background-color: var(--color-btn-bg);
+        border: 1px solid var(--color-btn-border);
+        color: var(--color-fg-default);
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+      }
+
+      .btn-back-commit:hover {
+        background-color: var(--color-btn-hover-bg);
+      }
+
+      .commit-detail-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--color-fg-default);
+        margin-bottom: 8px;
+        line-height: 1.3;
+      }
+
+      .commit-detail-meta {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 14px;
+        color: var(--color-fg-muted);
+        flex-wrap: wrap;
+      }
+
+      .commit-detail-author {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .commit-detail-hash {
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono',
+          monospace;
+        background-color: var(--color-btn-bg);
+        padding: 4px 8px;
+        border-radius: 4px;
+        border: 1px solid var(--color-btn-border);
+        font-size: 12px;
+      }
+
+      .commit-detail-stats {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-top: 12px;
+      }
+
+      .commit-detail-stat {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 14px;
+      }
+
+      .commit-detail-stat.additions {
+        color: var(--color-success-fg);
+      }
+
+      .commit-detail-stat.deletions {
+        color: var(--color-danger-fg);
+      }
+
+      .files-changed {
+        padding: 0;
+      }
+
+      .file-change {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--color-border-muted);
+        font-size: 14px;
+      }
+
+      .file-change:last-child {
+        border-bottom: none;
+      }
+
+      .file-change-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .file-status {
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+      }
+
+      .file-status.added {
+        background-color: rgba(63, 185, 80, 0.15);
+        color: var(--color-success-fg);
+        border: 1px solid rgba(63, 185, 80, 0.3);
+      }
+
+      .file-status.modified {
+        background-color: rgba(210, 153, 34, 0.15);
+        color: var(--color-warning-fg);
+        border: 1px solid rgba(210, 153, 34, 0.3);
+      }
+
+      .file-status.deleted {
+        background-color: rgba(248, 81, 73, 0.15);
+        color: var(--color-danger-fg);
+        border: 1px solid rgba(248, 81, 73, 0.3);
+      }
+
+      .file-change-name {
+        color: var(--color-fg-default);
+        font-weight: 500;
+      }
+
+      .file-change-stats {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+      }
+
+      .file-change-stat.additions {
+        color: var(--color-success-fg);
+      }
+
+      .file-change-stat.deletions {
+        color: var(--color-danger-fg);
+      }
+
       /* File Modal Styles */
       .file-modal-overlay {
         position: fixed;
@@ -920,6 +1174,42 @@
           padding: 16px;
           font-size: 12px;
         }
+
+        .commit-item {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .commit-avatar {
+          margin-bottom: 8px;
+          margin-right: 0;
+        }
+
+        .commit-stats {
+          margin-left: 0;
+          margin-top: 8px;
+        }
+
+        .commit-detail-meta {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .commit-detail-stats {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .file-change {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .file-change-stats {
+          margin-left: 0;
+        }
       }
     </style>
   </head>
@@ -944,6 +1234,8 @@
         const [readme, setReadme] = useState('')
         const [commits, setCommits] = useState([])
         const [pathHistory, setPathHistory] = useState([''])
+        const [activeTab, setActiveTab] = useState('code')
+        const [selectedCommit, setSelectedCommit] = useState(null)
         const [fileModal, setFileModal] = useState({
           isOpen: false,
           file: null,
@@ -1241,6 +1533,36 @@
           })
         }
 
+        const formatCommitDate = dateString => {
+          const date = new Date(dateString)
+          const now = new Date()
+          const diff = now - date
+          const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+
+          if (days === 0) return 'today'
+          if (days === 1) return '1 day ago'
+          if (days < 30) return `${days} days ago`
+          if (days < 365) return `${Math.floor(days / 30)} months ago`
+          return `${Math.floor(days / 365)} years ago`
+        }
+
+        const getAuthorInitials = author => {
+          return author
+            .split(' ')
+            .map(name => name[0])
+            .join('')
+            .toUpperCase()
+            .substring(0, 2)
+        }
+
+        const handleCommitClick = commit => {
+          setSelectedCommit(commit)
+        }
+
+        const handleBackToCommits = () => {
+          setSelectedCommit(null)
+        }
+
         const getMockFiles = (path = '') => {
           const mockFileStructure = {
             '': [
@@ -1311,25 +1633,144 @@ Check out the source code and documentation for more information.`
 
         const getMockCommits = () => [
           {
-            hash: 'a1b2c3d',
+            hash: 'a1b2c3d4e5f6789',
+            shortHash: 'a1b2c3d',
             message: 'Initial commit',
             author: 'Developer',
+            email: 'developer@example.com',
             date: new Date().toISOString(),
-            avatar: 'https://github.com/identicons/1.png'
+            avatar: 'https://github.com/identicons/1.png',
+            filesChanged: 3,
+            additions: 45,
+            deletions: 0,
+            files: [
+              {
+                name: 'README.md',
+                status: 'added',
+                additions: 12,
+                deletions: 0
+              },
+              {
+                name: 'package.json',
+                status: 'added',
+                additions: 18,
+                deletions: 0
+              },
+              {
+                name: '.gitignore',
+                status: 'added',
+                additions: 15,
+                deletions: 0
+              }
+            ]
           },
           {
-            hash: 'e4f5g6h',
-            message: 'Add README and package.json',
+            hash: 'e4f5g6h7i8j9012',
+            shortHash: 'e4f5g6h',
+            message: 'Add main application components and styling',
             author: 'Developer',
+            email: 'developer@example.com',
             date: new Date(Date.now() - 86400000).toISOString(),
-            avatar: 'https://github.com/identicons/2.png'
+            avatar: 'https://github.com/identicons/2.png',
+            filesChanged: 5,
+            additions: 127,
+            deletions: 8,
+            files: [
+              {
+                name: 'src/App.js',
+                status: 'added',
+                additions: 67,
+                deletions: 0
+              },
+              {
+                name: 'src/index.js',
+                status: 'added',
+                additions: 15,
+                deletions: 0
+              },
+              {
+                name: 'src/styles.css',
+                status: 'added',
+                additions: 38,
+                deletions: 0
+              },
+              {
+                name: 'package.json',
+                status: 'modified',
+                additions: 4,
+                deletions: 2
+              },
+              {
+                name: 'README.md',
+                status: 'modified',
+                additions: 3,
+                deletions: 6
+              }
+            ]
           },
           {
-            hash: 'i7j8k9l',
-            message: 'Update documentation',
+            hash: 'i7j8k9l0m1n2345',
+            shortHash: 'i7j8k9l',
+            message: 'Update documentation and fix responsive layout',
             author: 'Contributor',
+            email: 'contributor@example.com',
             date: new Date(Date.now() - 172800000).toISOString(),
-            avatar: 'https://github.com/identicons/3.png'
+            avatar: 'https://github.com/identicons/3.png',
+            filesChanged: 2,
+            additions: 23,
+            deletions: 12,
+            files: [
+              {
+                name: 'README.md',
+                status: 'modified',
+                additions: 18,
+                deletions: 7
+              },
+              {
+                name: 'src/styles.css',
+                status: 'modified',
+                additions: 5,
+                deletions: 5
+              }
+            ]
+          },
+          {
+            hash: 'p4q5r6s7t8u9123',
+            shortHash: 'p4q5r6s',
+            message: 'Add component tests and CI configuration',
+            author: 'Developer',
+            email: 'developer@example.com',
+            date: new Date(Date.now() - 259200000).toISOString(),
+            avatar: 'https://github.com/identicons/1.png',
+            filesChanged: 4,
+            additions: 89,
+            deletions: 3,
+            files: [
+              {
+                name: 'src/components/Header.test.js',
+                status: 'added',
+                additions: 34,
+                deletions: 0
+              },
+              {
+                name: 'src/components/Button.test.js',
+                status: 'added',
+                additions: 28,
+                deletions: 0
+              },
+              {
+                name: '.github/workflows/ci.yml',
+                status: 'added',
+                additions: 25,
+                deletions: 0
+              },
+              {
+                name: 'package.json',
+                status: 'modified',
+                additions: 2,
+                deletions: 3
+              }
+            ]
           }
         ]
 
@@ -1414,83 +1855,208 @@ Check out the source code and documentation for more information.`
 
             <main class="repo-content">
               <div class="repo-tabs">
-                <button class="tab active">
+                <button
+                  class="tab ${activeTab === 'code' ? 'active' : ''}"
+                  onClick=${() => {
+                    setActiveTab('code')
+                    setSelectedCommit(null)
+                  }}
+                >
                   <i class="fas fa-file-code"></i>
                   Code
                 </button>
-                <button class="tab">
+                <button
+                  class="tab ${activeTab === 'commits' ? 'active' : ''}"
+                  onClick=${() => {
+                    setActiveTab('commits')
+                    setSelectedCommit(null)
+                  }}
+                >
                   <i class="fas fa-history"></i>
                   Commits
                 </button>
               </div>
 
-              <div class="file-browser">
-                ${currentPath &&
-                html`
-                  <div class="breadcrumb-nav">
-                    <span
-                      class="breadcrumb-item"
-                      onClick=${() => navigateToPath('')}
-                    >
-                      <i class="fas fa-home"></i>
-                      ${repoData.name}
-                    </span>
-                    ${currentPath.split('/').map((part, index, parts) => {
-                      const pathToHere = parts.slice(0, index + 1).join('/')
-                      return html`
-                        <span key=${index} class="breadcrumb-separator">/</span>
-                        <span
-                          class="breadcrumb-item"
-                          onClick=${() => navigateToPath(pathToHere)}
+              ${activeTab === 'code' &&
+              !selectedCommit &&
+              html`
+                <div class="file-browser">
+                  ${currentPath &&
+                  html`
+                    <div class="breadcrumb-nav">
+                      <span
+                        class="breadcrumb-item"
+                        onClick=${() => navigateToPath('')}
+                      >
+                        <i class="fas fa-home"></i>
+                        ${repoData.name}
+                      </span>
+                      ${currentPath.split('/').map((part, index, parts) => {
+                        const pathToHere = parts.slice(0, index + 1).join('/')
+                        return html`
+                          <span key=${index} class="breadcrumb-separator"
+                            >/</span
+                          >
+                          <span
+                            class="breadcrumb-item"
+                            onClick=${() => navigateToPath(pathToHere)}
+                          >
+                            ${part}
+                          </span>
+                        `
+                      })}
+                    </div>
+                  `}
+
+                  <div class="file-list">
+                    ${files.map(
+                      file => html`
+                        <div
+                          key=${file.name}
+                          class="file-item ${file.type === 'directory' ||
+                          (file.type === 'file' &&
+                            isFileViewable(file.name, file.size))
+                            ? 'clickable'
+                            : ''}"
+                          onClick=${file.type === 'directory'
+                            ? () => navigateToDirectory(file.name)
+                            : file.type === 'file' &&
+                              isFileViewable(file.name, file.size)
+                            ? () => openFileModal(file)
+                            : null}
                         >
-                          ${part}
-                        </span>
+                          <div class="file-info">
+                            <i
+                              class="fas ${file.type === 'directory'
+                                ? 'fa-folder'
+                                : getFileIcon(file.name)}"
+                            ></i>
+                            <span class="file-name">${file.name}</span>
+                          </div>
+                          <span class="file-size">${file.size}</span>
+                        </div>
                       `
-                    })}
+                    )}
+                  </div>
+                </div>
+
+                ${readme &&
+                html`
+                  <div class="readme-section">
+                    <h3 class="readme-title">
+                      <i class="fas fa-book"></i>
+                      README.md
+                    </h3>
+                    <div class="readme-content">
+                      <pre>${readme}</pre>
+                    </div>
                   </div>
                 `}
-
-                <div class="file-list">
-                  ${files.map(
-                    file => html`
+              `}
+              ${activeTab === 'commits' &&
+              !selectedCommit &&
+              html`
+                <div class="commits-list">
+                  ${commits.map(
+                    commit => html`
                       <div
-                        key=${file.name}
-                        class="file-item ${file.type === 'directory' ||
-                        (file.type === 'file' &&
-                          isFileViewable(file.name, file.size))
-                          ? 'clickable'
-                          : ''}"
-                        onClick=${file.type === 'directory'
-                          ? () => navigateToDirectory(file.name)
-                          : file.type === 'file' &&
-                            isFileViewable(file.name, file.size)
-                          ? () => openFileModal(file)
-                          : null}
+                        key=${commit.hash}
+                        class="commit-item"
+                        onClick=${() => handleCommitClick(commit)}
                       >
-                        <div class="file-info">
-                          <i
-                            class="fas ${file.type === 'directory'
-                              ? 'fa-folder'
-                              : getFileIcon(file.name)}"
-                          ></i>
-                          <span class="file-name">${file.name}</span>
+                        <div class="commit-avatar">
+                          ${getAuthorInitials(commit.author)}
                         </div>
-                        <span class="file-size">${file.size}</span>
+                        <div class="commit-info">
+                          <div class="commit-message">${commit.message}</div>
+                          <div class="commit-meta">
+                            <span class="commit-author">${commit.author}</span>
+                            <span class="commit-hash">${commit.shortHash}</span>
+                            <span>${formatCommitDate(commit.date)}</span>
+                          </div>
+                        </div>
+                        <div class="commit-stats">
+                          <div class="commit-stat">
+                            <i class="fas fa-file"></i>
+                            ${commit.filesChanged}
+                          </div>
+                          <div class="commit-stat additions">
+                            +${commit.additions}
+                          </div>
+                          <div class="commit-stat deletions">
+                            -${commit.deletions}
+                          </div>
+                        </div>
                       </div>
                     `
                   )}
                 </div>
-              </div>
-
-              ${readme &&
+              `}
+              ${selectedCommit &&
               html`
-                <div class="readme-section">
-                  <h3 class="readme-title">
-                    <i class="fas fa-book"></i>
-                    README.md
-                  </h3>
-                  <div class="readme-content">
-                    <pre>${readme}</pre>
+                <div class="commit-detail">
+                  <div class="commit-detail-header">
+                    <div class="commit-detail-nav">
+                      <button
+                        class="btn-back-commit"
+                        onClick=${handleBackToCommits}
+                      >
+                        <i class="fas fa-arrow-left"></i>
+                        Back to commits
+                      </button>
+                    </div>
+                    <h2 class="commit-detail-title">
+                      ${selectedCommit.message}
+                    </h2>
+                    <div class="commit-detail-meta">
+                      <div class="commit-detail-author">
+                        <div class="commit-avatar">
+                          ${getAuthorInitials(selectedCommit.author)}
+                        </div>
+                        <span>${selectedCommit.author}</span>
+                        <span>&lt;${selectedCommit.email}&gt;</span>
+                      </div>
+                      <span class="commit-detail-hash"
+                        >${selectedCommit.hash}</span
+                      >
+                      <span>${formatCommitDate(selectedCommit.date)}</span>
+                    </div>
+                    <div class="commit-detail-stats">
+                      <div class="commit-detail-stat">
+                        <i class="fas fa-file"></i>
+                        ${selectedCommit.filesChanged} files changed
+                      </div>
+                      <div class="commit-detail-stat additions">
+                        <i class="fas fa-plus"></i>
+                        ${selectedCommit.additions} additions
+                      </div>
+                      <div class="commit-detail-stat deletions">
+                        <i class="fas fa-minus"></i>
+                        ${selectedCommit.deletions} deletions
+                      </div>
+                    </div>
+                  </div>
+                  <div class="files-changed">
+                    ${selectedCommit.files.map(
+                      file => html`
+                        <div key=${file.name} class="file-change">
+                          <div class="file-change-info">
+                            <span class="file-status ${file.status}">
+                              ${file.status}
+                            </span>
+                            <span class="file-change-name">${file.name}</span>
+                          </div>
+                          <div class="file-change-stats">
+                            <span class="file-change-stat additions">
+                              +${file.additions}
+                            </span>
+                            <span class="file-change-stat deletions">
+                              -${file.deletions}
+                            </span>
+                          </div>
+                        </div>
+                      `
+                    )}
                   </div>
                 </div>
               `}
