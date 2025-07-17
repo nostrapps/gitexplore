@@ -1334,7 +1334,7 @@
           })
 
           loadRepository()
-        }, [repo.url])
+        }, [repo.url, repo.name])
 
         useEffect(() => {
           const handleKeyDown = e => {
@@ -1439,7 +1439,9 @@
         }
 
         const loadMockData = path => {
+          console.log('loadMockData called for repo:', repo.name, 'path:', path)
           const newFiles = getMockFiles(path)
+          console.log('Generated files:', newFiles)
           setFiles(newFiles)
           setCurrentPath(path)
           // Only show README at root level
@@ -1716,80 +1718,177 @@
             path
           )
 
-          const variants = [
-            {
-              // JavaScript/React project with PWA support
-              '': [
-                { name: 'README.md', type: 'file', size: '2.1 KB' },
-                { name: 'package.json', type: 'file', size: '1.3 KB' },
-                { name: 'index.html', type: 'file', size: '3.4 KB' },
-                { name: 'src', type: 'directory', size: '-' },
-                { name: 'public', type: 'directory', size: '-' },
-                { name: '.gitignore', type: 'file', size: '234 B' },
-                { name: 'LICENSE', type: 'file', size: '1.1 KB' }
-              ],
-              src: [
-                { name: 'index.js', type: 'file', size: '1.8 KB' },
-                { name: 'components', type: 'directory', size: '-' },
-                { name: 'utils', type: 'directory', size: '-' },
-                { name: 'App.js', type: 'file', size: '3.2 KB' },
-                { name: 'styles.css', type: 'file', size: '2.4 KB' }
-              ],
-              'src/components': [
-                { name: 'Header.js', type: 'file', size: '1.1 KB' },
-                { name: 'Footer.js', type: 'file', size: '892 B' },
-                { name: 'Button.js', type: 'file', size: '654 B' }
-              ]
-            },
-            {
-              // Python project
-              '': [
-                { name: 'README.md', type: 'file', size: '1.8 KB' },
-                { name: 'requirements.txt', type: 'file', size: '456 B' },
-                { name: 'main.py', type: 'file', size: '2.7 KB' },
-                { name: 'src', type: 'directory', size: '-' },
-                { name: 'tests', type: 'directory', size: '-' },
-                { name: 'docs', type: 'directory', size: '-' },
-                { name: '.gitignore', type: 'file', size: '189 B' }
-              ],
-              src: [
-                { name: '__init__.py', type: 'file', size: '0 B' },
-                { name: 'models.py', type: 'file', size: '4.2 KB' },
-                { name: 'views.py', type: 'file', size: '3.1 KB' },
-                { name: 'utils.py', type: 'file', size: '1.9 KB' }
-              ],
-              tests: [
-                { name: '__init__.py', type: 'file', size: '0 B' },
-                { name: 'test_models.py', type: 'file', size: '2.3 KB' },
-                { name: 'test_views.py', type: 'file', size: '1.8 KB' }
-              ]
-            },
-            {
-              // Documentation project with static site
-              '': [
-                { name: 'README.md', type: 'file', size: '3.4 KB' },
-                { name: 'index.html', type: 'file', size: '2.8 KB' },
-                { name: 'docs', type: 'directory', size: '-' },
-                { name: 'examples', type: 'directory', size: '-' },
-                { name: 'LICENSE', type: 'file', size: '1.1 KB' },
-                { name: 'CONTRIBUTING.md', type: 'file', size: '987 B' }
-              ],
-              docs: [
-                { name: 'index.md', type: 'file', size: '2.1 KB' },
-                { name: 'api.md', type: 'file', size: '4.7 KB' },
-                { name: 'tutorial.md', type: 'file', size: '3.2 KB' },
-                { name: 'images', type: 'directory', size: '-' }
-              ],
-              examples: [
-                { name: 'basic.md', type: 'file', size: '1.5 KB' },
-                { name: 'advanced.md', type: 'file', size: '2.8 KB' },
-                { name: 'demo.html', type: 'file', size: '1.9 KB' }
-              ]
-            }
-          ]
+          // Generate unique file structure based on hash
+          const seedRandom = seed => {
+            const x = Math.sin(seed) * 10000
+            return x - Math.floor(x)
+          }
 
-          const selectedVariant = variants[repoHash % variants.length]
-          return selectedVariant[path] || []
+          if (path === '') {
+            // Root directory - generate files based on repo hash
+            const files = [{ name: 'README.md', type: 'file', size: '2.1 KB' }]
+
+            // Add different files based on hash
+            if (repoHash % 7 === 0) {
+              files.push({ name: 'package.json', type: 'file', size: '1.3 KB' })
+              files.push({ name: 'index.html', type: 'file', size: '3.4 KB' })
+              files.push({ name: 'src', type: 'directory', size: '-' })
+            } else if (repoHash % 5 === 0) {
+              files.push({
+                name: 'requirements.txt',
+                type: 'file',
+                size: '456 B'
+              })
+              files.push({ name: 'main.py', type: 'file', size: '2.7 KB' })
+              files.push({ name: 'src', type: 'directory', size: '-' })
+              files.push({ name: 'tests', type: 'directory', size: '-' })
+            } else if (repoHash % 3 === 0) {
+              files.push({ name: 'index.html', type: 'file', size: '2.8 KB' })
+              files.push({ name: 'docs', type: 'directory', size: '-' })
+              files.push({ name: 'examples', type: 'directory', size: '-' })
+            } else {
+              // Default structure with hash-based variations
+              files.push({
+                name: `main.${['js', 'py', 'go', 'rs'][repoHash % 4]}`,
+                type: 'file',
+                size: `${Math.floor(
+                  seedRandom(repoHash + 1) * 5 + 1
+                )}.${Math.floor(seedRandom(repoHash + 2) * 9)} KB`
+              })
+              files.push({ name: 'lib', type: 'directory', size: '-' })
+              if (seedRandom(repoHash + 3) > 0.5) {
+                files.push({
+                  name: 'config.json',
+                  type: 'file',
+                  size: `${Math.floor(seedRandom(repoHash + 4) * 2 + 1)} KB`
+                })
+              }
+            }
+
+            // Always add common files with hash-based variations
+            files.push({
+              name: '.gitignore',
+              type: 'file',
+              size: `${Math.floor(seedRandom(repoHash + 5) * 500 + 100)} B`
+            })
+            if (seedRandom(repoHash + 6) > 0.3) {
+              files.push({ name: 'LICENSE', type: 'file', size: '1.1 KB' })
+            }
+
+            return files
+          } else if (path === 'src') {
+            // Src directory - vary based on hash
+            const files = []
+            const fileTypes = ['js', 'py', 'go', 'rs', 'cpp']
+            const ext = fileTypes[repoHash % fileTypes.length]
+
+            files.push({
+              name: `index.${ext}`,
+              type: 'file',
+              size: `${Math.floor(
+                seedRandom(repoHash + 7) * 3 + 1
+              )}.${Math.floor(seedRandom(repoHash + 8) * 9)} KB`
+            })
+            files.push({
+              name: `utils.${ext}`,
+              type: 'file',
+              size: `${Math.floor(
+                seedRandom(repoHash + 9) * 2 + 1
+              )}.${Math.floor(seedRandom(repoHash + 10) * 9)} KB`
+            })
+
+            if (seedRandom(repoHash + 11) > 0.4) {
+              files.push({ name: 'components', type: 'directory', size: '-' })
+            }
+            if (seedRandom(repoHash + 12) > 0.6) {
+              files.push({
+                name: 'styles.css',
+                type: 'file',
+                size: `${Math.floor(
+                  seedRandom(repoHash + 13) * 3 + 1
+                )}.${Math.floor(seedRandom(repoHash + 14) * 9)} KB`
+              })
+            }
+
+            return files
+          } else if (path === 'docs') {
+            // Docs directory
+            return [
+              {
+                name: 'index.md',
+                type: 'file',
+                size: `${Math.floor(
+                  seedRandom(repoHash + 15) * 3 + 1
+                )}.${Math.floor(seedRandom(repoHash + 16) * 9)} KB`
+              },
+              {
+                name: 'api.md',
+                type: 'file',
+                size: `${Math.floor(
+                  seedRandom(repoHash + 17) * 4 + 2
+                )}.${Math.floor(seedRandom(repoHash + 18) * 9)} KB`
+              },
+              {
+                name: 'tutorial.md',
+                type: 'file',
+                size: `${Math.floor(
+                  seedRandom(repoHash + 19) * 3 + 1
+                )}.${Math.floor(seedRandom(repoHash + 20) * 9)} KB`
+              }
+            ]
+          } else if (path === 'tests') {
+            // Tests directory
+            const ext = ['py', 'js', 'go'][repoHash % 3]
+            return [
+              {
+                name: `test_main.${ext}`,
+                type: 'file',
+                size: `${Math.floor(
+                  seedRandom(repoHash + 21) * 2 + 1
+                )}.${Math.floor(seedRandom(repoHash + 22) * 9)} KB`
+              },
+              {
+                name: `test_utils.${ext}`,
+                type: 'file',
+                size: `${Math.floor(
+                  seedRandom(repoHash + 23) * 2 + 1
+                )}.${Math.floor(seedRandom(repoHash + 24) * 9)} KB`
+              }
+            ]
+          } else if (path === 'lib') {
+            // Lib directory
+            return [
+              { name: 'core', type: 'directory', size: '-' },
+              { name: 'helpers', type: 'directory', size: '-' }
+            ]
+          } else if (path === 'src/components') {
+            // Components directory
+            return [
+              {
+                name: 'Header.js',
+                type: 'file',
+                size: `${Math.floor(
+                  seedRandom(repoHash + 25) * 2 + 1
+                )}.${Math.floor(seedRandom(repoHash + 26) * 9)} KB`
+              },
+              {
+                name: 'Footer.js',
+                type: 'file',
+                size: `${Math.floor(
+                  seedRandom(repoHash + 27) * 1 + 1
+                )}.${Math.floor(seedRandom(repoHash + 28) * 9)} KB`
+              },
+              {
+                name: 'Button.js',
+                type: 'file',
+                size: `${Math.floor(
+                  seedRandom(repoHash + 29) * 1 + 1
+                )}.${Math.floor(seedRandom(repoHash + 30) * 9)} KB`
+              }
+            ]
+          }
+
+          return []
         }
 
         const getMockReadme = () => {
@@ -1887,241 +1986,115 @@
 
           console.log('getMockCommits for', repo.name, 'hash:', repoHash)
 
-          const commitVariants = [
-            // JavaScript/React commits
-            [
-              {
-                hash: 'a1b2c3d4e5f6789',
-                shortHash: 'a1b2c3d',
-                message: 'Initial commit',
-                author: 'Developer',
-                email: 'developer@example.com',
-                date: new Date().toISOString(),
-                avatar: 'https://github.com/identicons/1.png',
-                filesChanged: 3,
-                additions: 45,
-                deletions: 0,
-                files: [
-                  {
-                    name: 'README.md',
-                    status: 'added',
-                    additions: 12,
-                    deletions: 0
-                  },
-                  {
-                    name: 'package.json',
-                    status: 'added',
-                    additions: 18,
-                    deletions: 0
-                  },
-                  {
-                    name: '.gitignore',
-                    status: 'added',
-                    additions: 15,
-                    deletions: 0
-                  }
-                ]
-              },
-              {
-                hash: 'e4f5g6h7i8j9012',
-                shortHash: 'e4f5g6h',
-                message: 'Add main application components and styling',
-                author: 'Developer',
-                email: 'developer@example.com',
-                date: new Date(Date.now() - 86400000).toISOString(),
-                avatar: 'https://github.com/identicons/2.png',
-                filesChanged: 5,
-                additions: 127,
-                deletions: 8,
-                files: [
-                  {
-                    name: 'src/App.js',
-                    status: 'added',
-                    additions: 67,
-                    deletions: 0
-                  },
-                  {
-                    name: 'src/index.js',
-                    status: 'added',
-                    additions: 15,
-                    deletions: 0
-                  },
-                  {
-                    name: 'src/styles.css',
-                    status: 'added',
-                    additions: 38,
-                    deletions: 0
-                  },
-                  {
-                    name: 'package.json',
-                    status: 'modified',
-                    additions: 4,
-                    deletions: 2
-                  },
-                  {
-                    name: 'README.md',
-                    status: 'modified',
-                    additions: 3,
-                    deletions: 6
-                  }
-                ]
-              },
-              {
-                hash: 'i7j8k9l0m1n2345',
-                shortHash: 'i7j8k9l',
-                message: 'Update documentation and fix responsive layout',
-                author: 'Contributor',
-                email: 'contributor@example.com',
-                date: new Date(Date.now() - 172800000).toISOString(),
-                avatar: 'https://github.com/identicons/3.png',
-                filesChanged: 2,
-                additions: 23,
-                deletions: 12,
-                files: [
-                  {
-                    name: 'README.md',
-                    status: 'modified',
-                    additions: 18,
-                    deletions: 7
-                  },
-                  {
-                    name: 'src/styles.css',
-                    status: 'modified',
-                    additions: 5,
-                    deletions: 5
-                  }
-                ]
-              },
-              {
-                hash: 'p4q5r6s7t8u9123',
-                shortHash: 'p4q5r6s',
-                message: 'Add component tests and CI configuration',
-                author: 'Developer',
-                email: 'developer@example.com',
-                date: new Date(Date.now() - 259200000).toISOString(),
-                avatar: 'https://github.com/identicons/1.png',
-                filesChanged: 4,
-                additions: 89,
-                deletions: 3,
-                files: [
-                  {
-                    name: 'src/components/Header.test.js',
-                    status: 'added',
-                    additions: 34,
-                    deletions: 0
-                  },
-                  {
-                    name: 'src/components/Button.test.js',
-                    status: 'added',
-                    additions: 28,
-                    deletions: 0
-                  },
-                  {
-                    name: '.github/workflows/ci.yml',
-                    status: 'added',
-                    additions: 25,
-                    deletions: 0
-                  },
-                  {
-                    name: 'package.json',
-                    status: 'modified',
-                    additions: 2,
-                    deletions: 3
-                  }
-                ]
-              }
-            ],
-            // Python commits
-            [
-              {
-                hash: 'x9y8z7w6v5u4321',
-                shortHash: 'x9y8z7w',
-                message: 'Initial Python project structure',
-                author: 'PyDev',
-                email: 'pydev@example.com',
-                date: new Date().toISOString(),
-                avatar: 'https://github.com/identicons/4.png',
-                filesChanged: 4,
-                additions: 67,
-                deletions: 0,
-                files: [
-                  {
-                    name: 'README.md',
-                    status: 'added',
-                    additions: 15,
-                    deletions: 0
-                  },
-                  {
-                    name: 'main.py',
-                    status: 'added',
-                    additions: 23,
-                    deletions: 0
-                  },
-                  {
-                    name: 'requirements.txt',
-                    status: 'added',
-                    additions: 8,
-                    deletions: 0
-                  },
-                  {
-                    name: '.gitignore',
-                    status: 'added',
-                    additions: 21,
-                    deletions: 0
-                  }
-                ]
-              }
-            ],
-            // Documentation commits
-            [
-              {
-                hash: 'm5n4o3p2q1r0987',
-                shortHash: 'm5n4o3p',
-                message: 'Initial documentation structure',
-                author: 'DocWriter',
-                email: 'docs@example.com',
-                date: new Date().toISOString(),
-                avatar: 'https://github.com/identicons/6.png',
-                filesChanged: 5,
-                additions: 156,
-                deletions: 0,
-                files: [
-                  {
-                    name: 'README.md',
-                    status: 'added',
-                    additions: 34,
-                    deletions: 0
-                  },
-                  {
-                    name: 'docs/index.md',
-                    status: 'added',
-                    additions: 45,
-                    deletions: 0
-                  },
-                  {
-                    name: 'docs/api.md',
-                    status: 'added',
-                    additions: 67,
-                    deletions: 0
-                  },
-                  {
-                    name: 'CONTRIBUTING.md',
-                    status: 'added',
-                    additions: 23,
-                    deletions: 0
-                  },
-                  {
-                    name: 'LICENSE',
-                    status: 'added',
-                    additions: 21,
-                    deletions: 0
-                  }
-                ]
-              }
-            ]
+          // Generate unique commits based on hash
+          const seedRandom = seed => {
+            const x = Math.sin(seed) * 10000
+            return x - Math.floor(x)
+          }
+
+          const generateHash = seed => {
+            const chars = '0123456789abcdef'
+            let hash = ''
+            for (let i = 0; i < 15; i++) {
+              hash += chars[Math.floor(seedRandom(seed + i) * 16)]
+            }
+            return hash
+          }
+
+          const authors = [
+            'Developer',
+            'Contributor',
+            'Maintainer',
+            'CodeBot',
+            'TeamLead'
+          ]
+          const commitMessages = [
+            'Initial commit',
+            'Add core functionality',
+            'Fix bug in main module',
+            'Update documentation',
+            'Improve performance',
+            'Add tests and CI',
+            'Refactor code structure',
+            'Update dependencies',
+            'Add new features',
+            'Fix compatibility issues'
           ]
 
-          return commitVariants[repoHash % commitVariants.length]
+          const commits = []
+          const numCommits = Math.max(
+            2,
+            Math.floor(seedRandom(repoHash) * 6) + 1
+          )
+
+          for (let i = 0; i < numCommits; i++) {
+            const commitSeed = repoHash + i * 100
+            const hash = generateHash(commitSeed)
+            const author =
+              authors[Math.floor(seedRandom(commitSeed + 1) * authors.length)]
+            const message =
+              commitMessages[
+                Math.floor(seedRandom(commitSeed + 2) * commitMessages.length)
+              ]
+            const filesChanged = Math.floor(seedRandom(commitSeed + 3) * 5) + 1
+            const additions = Math.floor(seedRandom(commitSeed + 4) * 100) + 10
+            const deletions = Math.floor(seedRandom(commitSeed + 5) * 20)
+
+            // Generate files for this commit
+            const files = []
+            const fileNames = [
+              'README.md',
+              'main.js',
+              'index.html',
+              'utils.py',
+              'config.json',
+              'styles.css',
+              'app.go',
+              'test.rs'
+            ]
+            const statuses = ['added', 'modified', 'deleted']
+
+            for (let j = 0; j < filesChanged; j++) {
+              const fileSeed = commitSeed + j * 10
+              const fileName =
+                fileNames[Math.floor(seedRandom(fileSeed) * fileNames.length)]
+              const status =
+                statuses[Math.floor(seedRandom(fileSeed + 1) * statuses.length)]
+              const fileAdditions =
+                Math.floor(seedRandom(fileSeed + 2) * 50) + 1
+              const fileDeletions =
+                status === 'added'
+                  ? 0
+                  : Math.floor(seedRandom(fileSeed + 3) * 10)
+
+              files.push({
+                name: fileName,
+                status: status,
+                additions: fileAdditions,
+                deletions: fileDeletions
+              })
+            }
+
+            commits.push({
+              hash: hash,
+              shortHash: hash.substring(0, 7),
+              message: message,
+              author: author,
+              email: `${author.toLowerCase()}@example.com`,
+              date: new Date(
+                Date.now() - i * 86400000 * seedRandom(commitSeed + 6)
+              ).toISOString(),
+              avatar: `https://github.com/identicons/${
+                Math.floor(seedRandom(commitSeed + 7) * 10) + 1
+              }.png`,
+              filesChanged: filesChanged,
+              additions: additions,
+              deletions: deletions,
+              files: files
+            })
+          }
+
+          return commits.sort((a, b) => new Date(b.date) - new Date(a.date))
         }
 
         if (loading) {
@@ -2885,6 +2858,7 @@
 
         if (currentView === 'repo' && currentRepo) {
           return html`<${Repository}
+            key=${currentRepo.url + ':' + currentRepo.name}
             repo=${currentRepo}
             onBack=${navigateToExplore}
           />`
@@ -3025,6 +2999,19 @@
                       ${language}
                     </div>
 
+                    ${repo.website &&
+                    html`
+                      <a
+                        href=${repo.website}
+                        target="_blank"
+                        class="btn-website"
+                        style="margin-top: 12px;"
+                        onClick=${e => e.stopPropagation()}
+                      >
+                        <i class="fas fa-external-link-alt"></i>
+                        Visit Website
+                      </a>
+                    `}
                     ${event.tags &&
                     event.tags.length > 0 &&
                     html`
