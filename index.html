@@ -552,6 +552,43 @@
         background-color: var(--color-btn-hover-bg);
       }
 
+      .btn-website {
+        background-color: var(--color-btn-bg);
+        border-color: var(--color-btn-border);
+        color: var(--color-fg-default);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        border: 1px solid;
+      }
+
+      .btn-website:hover {
+        background-color: var(--color-btn-hover-bg);
+        color: var(--color-accent-fg);
+        border-color: var(--color-accent-fg);
+      }
+
+      .website-link {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--color-accent-fg);
+        text-decoration: none;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+
+      .website-link:hover {
+        text-decoration: underline;
+      }
+
       .btn-pwa {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border: 1px solid #667eea;
@@ -2147,9 +2184,27 @@
                       ></div>
                       ${repoData.language}
                     </span>
+                    ${repo.website &&
+                    html`
+                      <a
+                        href=${repo.website}
+                        target="_blank"
+                        class="website-link"
+                      >
+                        <i class="fas fa-external-link-alt"></i>
+                        Website
+                      </a>
+                    `}
                   </div>
                 </div>
                 <div class="repo-actions">
+                  ${repo.website &&
+                  html`
+                    <a href=${repo.website} target="_blank" class="btn-website">
+                      <i class="fas fa-external-link-alt"></i>
+                      Visit Website
+                    </a>
+                  `}
                   <button class="btn-secondary">
                     <i class="fas fa-star"></i>
                     Star
@@ -2431,10 +2486,15 @@
           const filterParam = urlParams.get('filter')
           const repoUrl = urlParams.get('repo')
           const repoName = urlParams.get('name')
+          const websiteUrl = urlParams.get('website')
 
           if (repoUrl && repoName) {
             setCurrentView('repo')
-            setCurrentRepo({ url: repoUrl, name: repoName })
+            setCurrentRepo({
+              url: repoUrl,
+              name: repoName,
+              website: websiteUrl
+            })
           } else {
             setCurrentView('explore')
             if (filterParam) {
@@ -2799,13 +2859,16 @@
           return `${Math.floor(days / 365)} years ago`
         }
 
-        const navigateToRepo = (repoUrl, repoName) => {
+        const navigateToRepo = (repoUrl, repoName, websiteUrl = null) => {
           const url = new URL(window.location)
           url.searchParams.set('repo', repoUrl)
           url.searchParams.set('name', repoName)
+          if (websiteUrl) {
+            url.searchParams.set('website', websiteUrl)
+          }
           window.history.pushState({}, '', url)
           setCurrentView('repo')
-          setCurrentRepo({ url: repoUrl, name: repoName })
+          setCurrentRepo({ url: repoUrl, name: repoName, website: websiteUrl })
         }
 
         const navigateToExplore = () => {
@@ -2962,7 +3025,11 @@
                       <button
                         class="clone-button"
                         onClick=${() =>
-                          navigateToRepo(repo.cloneUrl, repo.name)}
+                          navigateToRepo(
+                            repo.cloneUrl,
+                            repo.name,
+                            repo.website
+                          )}
                       >
                         <i class="fas fa-book-open"></i>
                         View Repository
