@@ -120,6 +120,29 @@
         color: var(--color-fg-muted);
       }
 
+      .clear-data-btn {
+        background: none;
+        border: none;
+        color: var(--color-fg-muted);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 3px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        transition: all 0.2s ease;
+        margin-left: 4px;
+      }
+
+      .clear-data-btn:hover {
+        background-color: var(--color-btn-hover-bg);
+        color: var(--color-accent-emphasis);
+      }
+
+      .clear-data-btn:active {
+        transform: scale(0.95);
+      }
+
       .status-dot {
         width: 8px;
         height: 8px;
@@ -3618,6 +3641,74 @@
           return `${connectedCount}/${connections.length} relays`
         }
 
+        const clearAllData = async () => {
+          try {
+            console.log('🧹 Clearing all application data...')
+
+            // Clear IndexedDB databases used by LightningFS
+            const databases = ['fs', 'fs-cleanup']
+
+            for (const dbName of databases) {
+              try {
+                console.log(`🗑️ Clearing database: ${dbName}`)
+
+                // Delete the entire IndexedDB database
+                const deleteRequest = indexedDB.deleteDatabase(dbName)
+
+                await new Promise((resolve, reject) => {
+                  deleteRequest.onsuccess = () => {
+                    console.log(`✅ Deleted database: ${dbName}`)
+                    resolve()
+                  }
+                  deleteRequest.onerror = () => {
+                    console.log(`❌ Failed to delete database: ${dbName}`)
+                    reject(deleteRequest.error)
+                  }
+                  deleteRequest.onblocked = () => {
+                    console.log(`⚠️ Delete blocked for database: ${dbName}`)
+                    // Force close any open connections and retry
+                    setTimeout(() => {
+                      const retryRequest = indexedDB.deleteDatabase(dbName)
+                      retryRequest.onsuccess = resolve
+                      retryRequest.onerror = reject
+                    }, 100)
+                  }
+                })
+              } catch (dbError) {
+                console.log(
+                  `❌ Error deleting database ${dbName}:`,
+                  dbError.message
+                )
+              }
+            }
+
+            // Clear localStorage
+            try {
+              localStorage.clear()
+              console.log('✅ Cleared localStorage')
+            } catch (lsError) {
+              console.log('❌ Error clearing localStorage:', lsError.message)
+            }
+
+            // Clear sessionStorage
+            try {
+              sessionStorage.clear()
+              console.log('✅ Cleared sessionStorage')
+            } catch (ssError) {
+              console.log('❌ Error clearing sessionStorage:', ssError.message)
+            }
+
+            console.log('✅ All data cleared successfully!')
+            alert('All application data cleared! The page will reload.')
+
+            // Reload the page to start fresh
+            window.location.reload()
+          } catch (error) {
+            console.error('❌ Error clearing data:', error)
+            alert('Error clearing data. Check console for details.')
+          }
+        }
+
         const formatTime = timestamp => {
           const now = Date.now()
           const eventTime = timestamp * 1000
@@ -3685,6 +3776,13 @@
               <div class="status-indicator">
                 <div class="status-dot"></div>
                 ${getConnectionStatus()}
+                <button
+                  class="clear-data-btn"
+                  onClick=${clearAllData}
+                  title="Clear all cached data (IndexedDB, localStorage)"
+                >
+                  <i class="fas fa-trash-alt"></i>
+                </button>
               </div>
             </div>
           </header>
