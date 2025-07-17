@@ -1428,6 +1428,101 @@
               )
               const fs = new LightningFS('fs')
 
+              // Clear any existing repository data to prevent conflicts
+              try {
+                console.log(
+                  '🧹 Aggressively cleaning up existing repository data...'
+                )
+
+                // First, try to completely wipe LightningFS storage for this repo
+                try {
+                  // Create a completely fresh LightningFS instance to avoid cached data
+                  const freshFs = new LightningFS('fs-cleanup')
+
+                  // Try to remove individual files first
+                  const filesToRemove = [
+                    '/repo/.well-known/txo/txo.json',
+                    '/repo/index.json',
+                    '/repo/.git/HEAD',
+                    '/repo/.git/config',
+                    '/repo/.git/index'
+                  ]
+
+                  for (const file of filesToRemove) {
+                    try {
+                      await fs.unlink(file)
+                      console.log(`🗑️ Removed ${file}`)
+                    } catch (unlinkError) {
+                      // File doesn't exist, which is fine
+                    }
+                  }
+
+                  // Try to remove directories recursively
+                  const dirsToRemove = [
+                    '/repo/.well-known',
+                    '/repo/.git',
+                    '/repo'
+                  ]
+
+                  for (const dir of dirsToRemove) {
+                    try {
+                      // List all files in directory first
+                      const files = await fs.readdir(dir)
+                      console.log(
+                        `📂 Found ${files.length} items in ${dir}:`,
+                        files
+                      )
+
+                      // Remove each file individually
+                      for (const file of files) {
+                        const filePath = `${dir}/${file}`
+                        try {
+                          const stat = await fs.stat(filePath)
+                          if (stat.isDirectory()) {
+                            // Skip subdirectories for now, remove files only
+                            console.log(`📁 Skipping subdirectory ${filePath}`)
+                          } else {
+                            await fs.unlink(filePath)
+                            console.log(`🗑️ Removed file ${filePath}`)
+                          }
+                        } catch (fileError) {
+                          console.log(
+                            `⚠️ Could not remove ${filePath}:`,
+                            fileError.message
+                          )
+                        }
+                      }
+
+                      // Finally remove the empty directory
+                      await fs.rmdir(dir)
+                      console.log(`✅ Removed directory ${dir}`)
+                    } catch (dirError) {
+                      console.log(
+                        `📁 Directory ${dir} not found or already removed`
+                      )
+                    }
+                  }
+                } catch (statError) {
+                  console.log('📁 No existing repository data found')
+                }
+
+                // Create a completely fresh /repo directory
+                try {
+                  await fs.mkdir('/repo')
+                  console.log('✅ Created fresh /repo directory')
+                } catch (mkdirError) {
+                  console.log('📁 /repo directory already exists or created')
+                }
+
+                // Also add force flag to git operations to overwrite any remaining files
+                console.log(
+                  '✅ Cleanup completed, will use force flags for git operations'
+                )
+              } catch (cleanupError) {
+                console.log('⚠️ Cleanup error:', cleanupError.message)
+                // Continue anyway - we'll use force flags
+              }
+
               // First test if this is actually a git repository by checking info/refs
               console.log('Testing git info/refs endpoint...')
 
@@ -1480,7 +1575,8 @@
                   url: normalizedUrl,
                   depth: 1,
                   singleBranch: true,
-                  noCheckout: false
+                  noCheckout: false,
+                  force: true // Force overwrite any existing files
                 })
 
                 console.log(
@@ -1613,7 +1709,8 @@
                   url: normalizedUrl,
                   depth: 1,
                   singleBranch: true,
-                  noCheckout: false
+                  noCheckout: false,
+                  force: true // Force overwrite any existing files
                 })
 
                 console.log(
@@ -1637,7 +1734,8 @@
                     dir: '/repo2',
                     url: normalizedUrl,
                     singleBranch: true,
-                    noCheckout: false
+                    noCheckout: false,
+                    force: true // Force overwrite any existing files
                     // No depth limit
                   })
 
@@ -1661,7 +1759,8 @@
                       dir: '/repo3',
                       url: normalizedUrl,
                       singleBranch: true,
-                      noCheckout: true // Don't checkout files
+                      noCheckout: true, // Don't checkout files
+                      force: true // Force overwrite any existing files
                     })
 
                     console.log(
@@ -1897,8 +1996,10 @@
                     const branchesToTry = [
                       'origin/main',
                       'origin/master',
+                      'origin/gh-pages',
                       'main',
                       'master',
+                      'gh-pages',
                       ...availableBranches.map(b => `origin/${b}`),
                       ...availableBranches
                     ]
