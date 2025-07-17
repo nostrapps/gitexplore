@@ -1298,6 +1298,9 @@
       } from 'https://cdn.skypack.dev/preact@10.19.3/hooks'
       import { html } from 'https://cdn.skypack.dev/htm@3.1.1/preact'
       import git from 'https://cdn.skypack.dev/isomorphic-git@1.24.5'
+      import http from 'https://cdn.skypack.dev/isomorphic-git@1.24.5/http/web'
+
+      // Debugging will be handled by the git HTTP client
 
       function Repository({ repo, onBack }) {
         const [loading, setLoading] = useState(true)
@@ -1317,6 +1320,7 @@
         })
         const [deploying, setDeploying] = useState(false)
         const [deployedSite, setDeployedSite] = useState(null)
+        const [realFs, setRealFs] = useState(null)
 
         useEffect(() => {
           // Clear all state when switching repositories
@@ -1332,6 +1336,7 @@
             file: null,
             content: ''
           })
+          setRealFs(null)
 
           loadRepository()
         }, [repo.url, repo.name])
@@ -1405,8 +1410,306 @@
               language: getRepoLanguage()
             })
 
-            // Load mock data (always use mock data since these are Nostr announcements)
-            loadMockData('')
+            // Always try to clone - let git operations fail naturally if not a repo
+            // Try to clone the actual repository first
+            try {
+              console.log('Attempting to clone repository:', repo.url)
+
+              // Normalize URL to prevent double slashes (used for both test and clone)
+              const normalizedUrl = repo.url.endsWith('/')
+                ? repo.url.slice(0, -1)
+                : repo.url
+              console.log('🔧 Using normalized URL:', normalizedUrl)
+
+              // Create a compatible filesystem for isomorphic-git using LightningFS
+              // Use LightningFS which is specifically designed for isomorphic-git
+              const { default: LightningFS } = await import(
+                'https://cdn.skypack.dev/@isomorphic-git/lightning-fs'
+              )
+              const fs = new LightningFS('fs')
+
+              // First test if this is actually a git repository by checking info/refs
+              console.log('Testing git info/refs endpoint...')
+
+              try {
+                const infoRefsUrl = `${normalizedUrl}/info/refs?service=git-upload-pack`
+
+                console.log('Checking:', infoRefsUrl)
+                const testResponse = await fetch(infoRefsUrl)
+                console.log('Info/refs response status:', testResponse.status)
+                console.log(
+                  'Info/refs response headers:',
+                  Object.fromEntries(testResponse.headers.entries())
+                )
+
+                const responseText = await testResponse.text()
+                console.log(
+                  'Info/refs response body (first 200 chars):',
+                  responseText.substring(0, 200)
+                )
+                console.log(
+                  'Info/refs response body (full length):',
+                  responseText.length
+                )
+
+                if (!responseText.includes('service=git-upload-pack')) {
+                  throw new Error(
+                    'Response does not contain git-upload-pack service - not a git repository'
+                  )
+                }
+              } catch (infoError) {
+                console.log('Info/refs test failed:', infoError.message)
+                throw new Error(
+                  'Git info/refs endpoint test failed: ' + infoError.message
+                )
+              }
+
+              console.log('✅ Git info/refs test passed, attempting clone...')
+
+              // Try multiple approaches to git cloning
+              console.log(
+                '🔄 Attempting clone with built-in HTTP client first...'
+              )
+
+              try {
+                // First try with the standard isomorphic-git http client
+                await git.clone({
+                  fs: fs,
+                  http: http, // Use the standard http client
+                  dir: '/repo',
+                  url: normalizedUrl,
+                  depth: 1,
+                  singleBranch: true,
+                  noCheckout: false
+                })
+
+                console.log(
+                  '✅ Repository cloned successfully with standard client!'
+                )
+                setRealFs(fs)
+                await loadRealData('', fs)
+                setLoading(false) // Ensure loading stops after real data is loaded
+                return // Success, exit early
+              } catch (standardError) {
+                console.log(
+                  '❌ Standard HTTP client failed:',
+                  standardError.message
+                )
+                console.log('🔄 Trying with custom debug HTTP client...')
+              }
+
+              // Create enhanced HTTP client with debugging as fallback
+              let requestCount = 0
+              const debugHttp = {
+                request: async (urlOrOptions, optionalOptions = {}) => {
+                  requestCount++
+                  const reqId = `[REQ-${requestCount}]`
+
+                  // isomorphic-git can pass either a URL string or an options object
+                  let url, options
+
+                  if (typeof urlOrOptions === 'string') {
+                    // Old style: request(url, options)
+                    url = urlOrOptions
+                    options = optionalOptions
+                  } else {
+                    // New style: request({url, method, headers, body, ...})
+                    url = urlOrOptions.url
+                    options = {
+                      method: urlOrOptions.method,
+                      headers: urlOrOptions.headers,
+                      body: urlOrOptions.body,
+                      ...optionalOptions
+                    }
+                  }
+
+                  console.log(
+                    `🚀 ${reqId} Git HTTP request:`,
+                    url,
+                    options.method || 'GET'
+                  )
+                  console.log(`🚀 ${reqId} Request headers:`, options.headers)
+                  console.log(
+                    `🚀 ${reqId} Request body length:`,
+                    options.body ? options.body.length : 0
+                  )
+
+                  if (
+                    options.body &&
+                    options.body.length > 0 &&
+                    options.body.length < 500
+                  ) {
+                    console.log(`🚀 ${reqId} Request body:`, options.body)
+                  }
+
+                  try {
+                    const response = await fetch(url, options)
+
+                    console.log(
+                      `✅ ${reqId} Git HTTP response:`,
+                      response.status,
+                      response.statusText
+                    )
+                    console.log(
+                      `✅ ${reqId} Response headers:`,
+                      Object.fromEntries(response.headers.entries())
+                    )
+
+                    // Clone the response to read the body for debugging without consuming it
+                    const clonedResponse = response.clone()
+                    try {
+                      const text = await clonedResponse.text()
+                      console.log(
+                        `✅ ${reqId} Response body length:`,
+                        text.length
+                      )
+                      console.log(
+                        `✅ ${reqId} Response body (first 200 chars):`,
+                        text.substring(0, 200)
+                      )
+
+                      // For git protocol responses, show more detail
+                      if (text.length > 0 && !text.startsWith('<')) {
+                        console.log(
+                          `✅ ${reqId} Response appears to be git protocol data`
+                        )
+                      } else if (text.startsWith('<')) {
+                        console.log(
+                          `❌ ${reqId} Response appears to be HTML (error page?)`
+                        )
+                      }
+                    } catch (e) {
+                      console.log(
+                        `❌ ${reqId} Could not read response body for debugging:`,
+                        e.message
+                      )
+                    }
+
+                    // Check if response indicates an error
+                    if (!response.ok) {
+                      console.log(
+                        `❌ ${reqId} HTTP error status:`,
+                        response.status,
+                        response.statusText
+                      )
+                    }
+
+                    return response
+                  } catch (fetchError) {
+                    console.log(`❌ ${reqId} Fetch failed:`, fetchError.message)
+                    throw fetchError
+                  }
+                }
+              }
+
+              // Use the already normalized URL from above
+
+              try {
+                // Attempt to clone with custom debug HTTP client
+                await git.clone({
+                  fs: fs,
+                  http: debugHttp,
+                  dir: '/repo',
+                  url: normalizedUrl,
+                  depth: 1,
+                  singleBranch: true,
+                  noCheckout: false
+                })
+
+                console.log(
+                  '✅ Repository cloned successfully with debug client!'
+                )
+                setRealFs(fs)
+                await loadRealData('', fs)
+                setLoading(false)
+              } catch (debugError) {
+                console.log(
+                  '❌ Debug HTTP client also failed:',
+                  debugError.message
+                )
+                console.log('🔄 Trying different clone configurations...')
+
+                // Try without depth limit
+                try {
+                  await git.clone({
+                    fs: fs,
+                    http: http,
+                    dir: '/repo2',
+                    url: normalizedUrl,
+                    singleBranch: true,
+                    noCheckout: false
+                    // No depth limit
+                  })
+
+                  console.log(
+                    '✅ Repository cloned successfully without depth limit!'
+                  )
+                  setRealFs(fs)
+                  await loadRealData('', fs)
+                  setLoading(false)
+                } catch (noDepthError) {
+                  console.log(
+                    '❌ Clone without depth limit failed:',
+                    noDepthError.message
+                  )
+
+                  // Try with noCheckout
+                  try {
+                    await git.clone({
+                      fs: fs,
+                      http: http,
+                      dir: '/repo3',
+                      url: normalizedUrl,
+                      singleBranch: true,
+                      noCheckout: true // Don't checkout files
+                    })
+
+                    console.log(
+                      '✅ Repository cloned successfully with noCheckout!'
+                    )
+                    setRealFs(fs)
+                    await loadRealData('', fs)
+                    setLoading(false)
+                  } catch (noCheckoutError) {
+                    console.log('❌ All git clone strategies failed')
+                    console.log('Debug error:', debugError.message)
+                    console.log('No depth error:', noDepthError.message)
+                    console.log('No checkout error:', noCheckoutError.message)
+                    throw new Error('All git clone strategies failed')
+                  }
+                }
+              }
+            } catch (cloneError) {
+              console.log('Git clone failed:', cloneError)
+              console.log('Error details:', {
+                name: cloneError.name,
+                message: cloneError.message,
+                stack: cloneError.stack
+              })
+
+              // Check if the URL might not be a git repository
+              if (
+                cloneError.message.includes('bind') ||
+                cloneError.message.includes('http') ||
+                cloneError.name === 'TypeError'
+              ) {
+                console.log(
+                  'This appears to be a module loading issue, not a git issue'
+                )
+              } else if (
+                cloneError.message.includes('404') ||
+                cloneError.message.includes('not found')
+              ) {
+                console.log(
+                  'Repository not found - this might not be a git URL'
+                )
+              } else {
+                console.log('Unknown git error - falling back to mock data')
+              }
+
+              // Fall back to mock data if cloning fails
+              loadMockData('')
+            }
 
             setLoading(false)
           } catch (err) {
@@ -1438,6 +1741,114 @@
           return descriptions[repoHash % descriptions.length]
         }
 
+        const loadRealData = async (path = '', fs) => {
+          try {
+            console.log(
+              'loadRealData called for repo:',
+              repo.name,
+              'path:',
+              path
+            )
+            const repoPath = '/repo' + (path ? '/' + path : '')
+
+            // Read directory contents using LightningFS
+            const entries = await fs.promises.readdir(repoPath)
+            const files = []
+
+            for (const entry of entries) {
+              if (entry === '.git') continue // Skip .git directory
+
+              const entryPath = repoPath + '/' + entry
+              try {
+                const stat = await fs.promises.stat(entryPath)
+                files.push({
+                  name: entry,
+                  type: stat.isDirectory() ? 'directory' : 'file',
+                  size: stat.isFile()
+                    ? `${(stat.size / 1024).toFixed(1)} KB`
+                    : '-'
+                })
+              } catch (err) {
+                console.log('Error reading entry:', entry, err)
+              }
+            }
+
+            console.log('Real files loaded:', files)
+            setFiles(files)
+            setCurrentPath(path)
+
+            // Load README if at root level
+            if (path === '') {
+              try {
+                const readmePath = '/repo/README.md'
+                const readmeContent = await fs.promises.readFile(
+                  readmePath,
+                  'utf8'
+                )
+                setReadme(readmeContent)
+                console.log('README loaded from real repository')
+              } catch (err) {
+                console.log('No README found, using default')
+                setReadme(
+                  '# ' +
+                    repo.name +
+                    '\n\nThis repository was loaded from: ' +
+                    repo.url
+                )
+              }
+            } else {
+              setReadme('')
+            }
+
+            // Load real commits from git history
+            try {
+              console.log('Loading real commits from git history...')
+
+              // Add timeout to prevent hanging
+              const commitPromise = git.log({
+                fs,
+                dir: '/repo',
+                depth: 10 // Load last 10 commits
+              })
+
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(
+                  () => reject(new Error('Commit loading timeout')),
+                  5000
+                )
+              )
+
+              const commits = await Promise.race([
+                commitPromise,
+                timeoutPromise
+              ])
+
+              console.log('Raw git commits:', commits)
+
+              const formattedCommits = commits.map(commit => ({
+                hash: commit.oid.substring(0, 7),
+                author: commit.commit.author.name,
+                date: new Date(
+                  commit.commit.author.timestamp * 1000
+                ).toLocaleDateString(),
+                message: commit.commit.message.split('\n')[0], // First line only
+                files: [`${Math.floor(Math.random() * 5) + 1} files changed`] // Simplified for now
+              }))
+
+              console.log('Formatted commits:', formattedCommits)
+              setCommits(formattedCommits)
+            } catch (commitError) {
+              console.log('Failed to load real commits:', commitError.message)
+              console.log('Falling back to mock commits')
+              setCommits(getMockCommits())
+            }
+          } catch (err) {
+            console.error('Error loading real data:', err)
+            // Fall back to mock data
+            loadMockData(path)
+          }
+        }
+
         const loadMockData = path => {
           console.log('loadMockData called for repo:', repo.name, 'path:', path)
           const newFiles = getMockFiles(path)
@@ -1455,12 +1866,20 @@
 
         const navigateToDirectory = dirName => {
           const newPath = currentPath ? `${currentPath}/${dirName}` : dirName
-          loadMockData(newPath)
+          if (realFs) {
+            loadRealData(newPath, realFs)
+          } else {
+            loadMockData(newPath)
+          }
           setPathHistory(prev => [...prev, newPath])
         }
 
         const navigateToPath = targetPath => {
-          loadMockData(targetPath)
+          if (realFs) {
+            loadRealData(targetPath, realFs)
+          } else {
+            loadMockData(targetPath)
+          }
           // Update path history to only include paths up to this point
           const pathParts = targetPath ? targetPath.split('/') : ['']
           const newHistory = ['']
@@ -1612,8 +2031,27 @@
           )
         }
 
-        const openFileModal = file => {
-          const content = generateFileContent(file.name)
+        const openFileModal = async file => {
+          let content
+
+          if (realFs) {
+            try {
+              const filePath = `/repo${currentPath ? '/' + currentPath : ''}/${
+                file.name
+              }`
+              content = await realFs.promises.readFile(filePath, 'utf8')
+              console.log('Real file content loaded for:', file.name)
+            } catch (err) {
+              console.log(
+                'Error reading real file, using generated content:',
+                err
+              )
+              content = generateFileContent(file.name)
+            }
+          } else {
+            content = generateFileContent(file.name)
+          }
+
           setFileModal({
             isOpen: true,
             file: file,
