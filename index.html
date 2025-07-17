@@ -2982,14 +2982,19 @@
                   <div key=${event.id} class="repository-card">
                     <div class="repo-header">
                       <div>
-                        <a
-                          href=${repo.url || '#'}
-                          target="_blank"
+                        <span
                           class="repo-name"
+                          onClick=${() =>
+                            navigateToRepo(
+                              repo.cloneUrl,
+                              repo.name,
+                              repo.website
+                            )}
+                          style="cursor: pointer;"
                         >
                           <i class="fas fa-book"></i>
                           ${repo.name}
-                        </a>
+                        </span>
                         <div class="repo-visibility">Public</div>
                       </div>
                     </div>
@@ -3020,21 +3025,6 @@
                       ${language}
                     </div>
 
-                    ${repo.cloneUrl &&
-                    html`
-                      <button
-                        class="clone-button"
-                        onClick=${() =>
-                          navigateToRepo(
-                            repo.cloneUrl,
-                            repo.name,
-                            repo.website
-                          )}
-                      >
-                        <i class="fas fa-book-open"></i>
-                        View Repository
-                      </button>
-                    `}
                     ${event.tags &&
                     event.tags.length > 0 &&
                     html`
