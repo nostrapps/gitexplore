@@ -1804,39 +1804,306 @@
             try {
               console.log('Loading real commits from git history...')
 
-              // Add timeout to prevent hanging
-              const commitPromise = git.log({
-                fs,
-                dir: '/repo',
-                depth: 10 // Load last 10 commits
-              })
+              let commits = null
+              let commitRef = 'HEAD'
 
-              const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(
-                  () => reject(new Error('Commit loading timeout')),
-                  5000
+              // Strategy 1: Try with HEAD first
+              try {
+                console.log('Trying git.log with HEAD...')
+                const commitPromise = git.log({
+                  fs,
+                  dir: '/repo',
+                  ref: 'HEAD',
+                  depth: 10
+                })
+
+                const timeoutPromise = new Promise((_, reject) =>
+                  setTimeout(
+                    () => reject(new Error('Commit loading timeout')),
+                    5000
+                  )
                 )
-              )
 
-              const commits = await Promise.race([
-                commitPromise,
-                timeoutPromise
-              ])
+                commits = await Promise.race([commitPromise, timeoutPromise])
+                console.log('✅ Got commits with HEAD reference')
+              } catch (headError) {
+                console.log('❌ HEAD failed:', headError.message)
 
-              console.log('Raw git commits:', commits)
+                // Strategy 2: Try direct remote references and list all branches
+                try {
+                  // First try origin/HEAD directly
+                  console.log('Trying origin/HEAD directly...')
+                  try {
+                    const commitPromise = git.log({
+                      fs,
+                      dir: '/repo',
+                      ref: 'origin/HEAD',
+                      depth: 10
+                    })
 
-              const formattedCommits = commits.map(commit => ({
-                hash: commit.oid.substring(0, 7),
-                author: commit.commit.author.name,
-                date: new Date(
-                  commit.commit.author.timestamp * 1000
-                ).toLocaleDateString(),
-                message: commit.commit.message.split('\n')[0], // First line only
-                files: [`${Math.floor(Math.random() * 5) + 1} files changed`] // Simplified for now
-              }))
+                    const timeoutPromise = new Promise((_, reject) =>
+                      setTimeout(
+                        () => reject(new Error('Commit loading timeout')),
+                        5000
+                      )
+                    )
 
-              console.log('Formatted commits:', formattedCommits)
-              setCommits(formattedCommits)
+                    commits = await Promise.race([
+                      commitPromise,
+                      timeoutPromise
+                    ])
+                    console.log('✅ Got commits with origin/HEAD')
+                  } catch (originHeadError) {
+                    console.log(
+                      '❌ origin/HEAD failed:',
+                      originHeadError.message
+                    )
+
+                    // Try listing all branches (including remotes)
+                    console.log('Listing all available branches...')
+                    const allBranches = await git.listBranches({
+                      fs,
+                      dir: '/repo'
+                    })
+                    console.log('All branches:', allBranches)
+
+                    // Try listing remote branches specifically
+                    let remoteBranches = []
+                    try {
+                      remoteBranches = await git.listBranches({
+                        fs,
+                        dir: '/repo',
+                        remote: 'origin'
+                      })
+                      console.log('Remote branches:', remoteBranches)
+                    } catch (remoteError) {
+                      console.log(
+                        '❌ Remote branch listing failed:',
+                        remoteError.message
+                      )
+                    }
+
+                    // Combine all available branches
+                    const availableBranches = [
+                      ...allBranches,
+                      ...remoteBranches
+                    ]
+                    console.log(
+                      'Combined available branches:',
+                      availableBranches
+                    )
+
+                    // Try common default branch patterns
+                    const branchesToTry = [
+                      'origin/main',
+                      'origin/master',
+                      'main',
+                      'master',
+                      ...availableBranches.map(b => `origin/${b}`),
+                      ...availableBranches
+                    ]
+
+                    console.log('Will try branches in order:', branchesToTry)
+
+                    let success = false
+                    for (const branchRef of branchesToTry) {
+                      if (success) break
+
+                      try {
+                        console.log(`Trying git.log with: ${branchRef}`)
+                        const commitPromise = git.log({
+                          fs,
+                          dir: '/repo',
+                          ref: branchRef,
+                          depth: 10
+                        })
+
+                        const timeoutPromise = new Promise((_, reject) =>
+                          setTimeout(
+                            () => reject(new Error('Commit loading timeout')),
+                            5000
+                          )
+                        )
+
+                        commits = await Promise.race([
+                          commitPromise,
+                          timeoutPromise
+                        ])
+                        console.log(
+                          `✅ Got commits with branch reference: ${branchRef}`
+                        )
+                        success = true
+                      } catch (branchError) {
+                        console.log(
+                          `❌ ${branchRef} failed:`,
+                          branchError.message
+                        )
+                      }
+                    }
+                  }
+                } catch (branchError) {
+                  console.log('❌ Branch strategy failed:', branchError.message)
+
+                  // Strategy 2b: Try to resolve remote HEAD and use commit hash directly
+                  try {
+                    console.log('Trying to resolve remote HEAD reference...')
+
+                    // Try to resolve what origin/HEAD points to
+                    let remoteHeadCommit = null
+                    try {
+                      remoteHeadCommit = await git.resolveRef({
+                        fs,
+                        dir: '/repo',
+                        ref: 'origin/HEAD'
+                      })
+                      console.log(
+                        'Resolved origin/HEAD to commit:',
+                        remoteHeadCommit
+                      )
+                    } catch (resolveError) {
+                      console.log(
+                        '❌ Could not resolve origin/HEAD:',
+                        resolveError.message
+                      )
+
+                      // Try to find any remote refs
+                      try {
+                        console.log('Checking git directory structure...')
+                        const gitFiles = await fs.readdir('/repo/.git')
+                        console.log('Git directory contents:', gitFiles)
+
+                        // Try reading packed refs if regular refs don't exist
+                        try {
+                          const packedRefs = await fs.readFile(
+                            '/repo/.git/packed-refs',
+                            { encoding: 'utf8' }
+                          )
+                          console.log('Packed refs content:', packedRefs)
+
+                          // Parse packed refs to find a commit hash
+                          const lines = packedRefs.split('\n')
+                          for (const line of lines) {
+                            if (
+                              line.includes('refs/heads/') ||
+                              line.includes('HEAD')
+                            ) {
+                              const parts = line.split('\t')
+                              if (parts.length >= 2) {
+                                remoteHeadCommit = parts[0].trim()
+                                console.log(
+                                  'Found commit from packed refs:',
+                                  remoteHeadCommit
+                                )
+                                break
+                              }
+                            }
+                          }
+                        } catch (packedError) {
+                          console.log(
+                            '❌ Could not read packed refs:',
+                            packedError.message
+                          )
+                        }
+                      } catch (refsError) {
+                        console.log(
+                          '❌ Could not list refs:',
+                          refsError.message
+                        )
+                      }
+                    }
+
+                    if (remoteHeadCommit) {
+                      console.log(
+                        `Trying git.log with commit hash: ${remoteHeadCommit}`
+                      )
+                      const commitPromise = git.log({
+                        fs,
+                        dir: '/repo',
+                        ref: remoteHeadCommit,
+                        depth: 10
+                      })
+
+                      const timeoutPromise = new Promise((_, reject) =>
+                        setTimeout(
+                          () => reject(new Error('Commit loading timeout')),
+                          5000
+                        )
+                      )
+
+                      commits = await Promise.race([
+                        commitPromise,
+                        timeoutPromise
+                      ])
+                      console.log('✅ Got commits using resolved commit hash!')
+                    }
+                  } catch (resolveError) {
+                    console.log(
+                      '❌ Resolve strategy failed:',
+                      resolveError.message
+                    )
+                  }
+                }
+
+                // If we still don't have commits, try the checkout strategy
+                if (!commits) {
+                  // Strategy 3: Try to checkout first, then get commits
+                  try {
+                    console.log(
+                      'Attempting to checkout HEAD to set up working directory...'
+                    )
+                    await git.checkout({
+                      fs,
+                      dir: '/repo',
+                      ref: 'main'
+                    })
+                    console.log('✅ Checkout successful, retrying git.log...')
+
+                    const commitPromise = git.log({
+                      fs,
+                      dir: '/repo',
+                      depth: 10
+                    })
+
+                    const timeoutPromise = new Promise((_, reject) =>
+                      setTimeout(
+                        () => reject(new Error('Commit loading timeout')),
+                        5000
+                      )
+                    )
+
+                    commits = await Promise.race([
+                      commitPromise,
+                      timeoutPromise
+                    ])
+                    console.log('✅ Got commits after checkout')
+                  } catch (checkoutError) {
+                    console.log(
+                      '❌ Checkout strategy failed:',
+                      checkoutError.message
+                    )
+                    throw new Error('All commit loading strategies failed')
+                  }
+                }
+              }
+
+              if (commits && commits.length > 0) {
+                console.log('Raw git commits:', commits)
+
+                const formattedCommits = commits.map(commit => ({
+                  hash: commit.oid.substring(0, 7),
+                  author: commit.commit.author.name,
+                  date: new Date(
+                    commit.commit.author.timestamp * 1000
+                  ).toLocaleDateString(),
+                  message: commit.commit.message.split('\n')[0], // First line only
+                  files: [`${Math.floor(Math.random() * 5) + 1} files changed`] // Simplified for now
+                }))
+
+                console.log('Formatted commits:', formattedCommits)
+                setCommits(formattedCommits)
+              } else {
+                throw new Error('No commits found')
+              }
             } catch (commitError) {
               console.log('Failed to load real commits:', commitError.message)
               console.log('Falling back to mock commits')
@@ -2609,13 +2876,6 @@
                   </div>
                 </div>
                 <div class="repo-actions">
-                  ${repo.website &&
-                  html`
-                    <a href=${repo.website} target="_blank" class="btn-website">
-                      <i class="fas fa-external-link-alt"></i>
-                      Visit Website
-                    </a>
-                  `}
                   <button class="btn-secondary">
                     <i class="fas fa-star"></i>
                     Star
