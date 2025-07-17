@@ -552,6 +552,43 @@
         background-color: var(--color-btn-hover-bg);
       }
 
+      .btn-pwa {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: 1px solid #667eea;
+        color: white;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-pwa:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-pwa:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .btn-pwa .loading-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid transparent;
+        border-top: 2px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
       .repo-content {
         max-width: 1280px;
         margin: 0 auto;
@@ -1241,8 +1278,24 @@
           file: null,
           content: ''
         })
+        const [deploying, setDeploying] = useState(false)
+        const [deployedSite, setDeployedSite] = useState(null)
 
         useEffect(() => {
+          // Clear all state when switching repositories
+          setFiles([])
+          setReadme('')
+          setCommits([])
+          setCurrentPath('')
+          setPathHistory([''])
+          setActiveTab('code')
+          setSelectedCommit(null)
+          setFileModal({
+            isOpen: false,
+            file: null,
+            content: ''
+          })
+
           loadRepository()
         }, [repo.url])
 
@@ -1271,56 +1324,52 @@
             setLoading(true)
             setError(null)
 
-            // Create a CORS proxy URL for the repository
-            const corsProxy = 'https://cors-anywhere.herokuapp.com/'
-            const repoUrl = repo.url.startsWith('http')
-              ? repo.url
-              : `https://github.com/${repo.url}`
+            console.log('Loading repository:', repo.name, 'URL:', repo.url)
 
-            // Initialize repository data
-            const fs = new Map()
+            // Generate repository-specific data using repo URL + name as seed
+            const repoSeed = (repo.name + repo.url).toLowerCase()
+            const repoHash = repoSeed
+              .split('')
+              .reduce((a, b) => a + b.charCodeAt(0), 0)
 
-            // Try to clone or fetch basic repo info
-            try {
-              await git.clone({
-                fs: { promises: fs },
-                http: { request: fetch },
-                dir: '/repo',
-                url: corsProxy + repoUrl,
-                singleBranch: true,
-                depth: 1
-              })
+            // Add some randomness but keep it deterministic per repo
+            const seedRandom = seed => {
+              const x = Math.sin(seed) * 10000
+              return x - Math.floor(x)
+            }
 
-              // Load file tree
-              const fileList = await loadFileTree(fs, '/repo')
-              setFiles(fileList)
+            const getRepoStats = () => ({
+              stars: Math.floor(seedRandom(repoHash + 1) * 2000),
+              forks: Math.floor(seedRandom(repoHash + 2) * 500),
+              issues: Math.floor(seedRandom(repoHash + 3) * 100)
+            })
 
-              // Load README if exists
-              const readmeContent = await loadReadme(fs, '/repo')
-              setReadme(readmeContent)
-
-              // Load recent commits
-              const commitList = await loadCommits(fs, '/repo')
-              setCommits(commitList)
-            } catch (gitError) {
-              console.warn('Git clone failed, showing mock data:', gitError)
-              // Fallback to mock data if git operations fail
-              loadMockData('')
+            const getRepoLanguage = () => {
+              const languages = [
+                'JavaScript',
+                'Python',
+                'TypeScript',
+                'Go',
+                'Rust',
+                'Java',
+                'C++',
+                'PHP',
+                'Ruby',
+                'Swift'
+              ]
+              return languages[repoHash % languages.length]
             }
 
             setRepoData({
               name: repo.name,
               url: repo.url,
-              description: 'A Git repository',
-              stars: Math.floor(Math.random() * 1000),
-              forks: Math.floor(Math.random() * 200),
-              language: 'JavaScript'
+              description: getRepoDescription(),
+              ...getRepoStats(),
+              language: getRepoLanguage()
             })
 
-            // If we haven't loaded mock data yet (git failed), load it now
-            if (files.length === 0) {
-              loadMockData('')
-            }
+            // Load mock data (always use mock data since these are Nostr announcements)
+            loadMockData('')
 
             setLoading(false)
           } catch (err) {
@@ -1330,23 +1379,31 @@
           }
         }
 
-        const loadFileTree = async (fs, dir) => {
-          // Mock file tree for now
-          return getMockFiles()
-        }
+        const getRepoDescription = () => {
+          const repoSeed = (repo.name + repo.url).toLowerCase()
+          const repoHash = repoSeed
+            .split('')
+            .reduce((a, b) => a + b.charCodeAt(0), 0)
 
-        const loadReadme = async (fs, dir) => {
-          // Mock README for now
-          return getMockReadme()
-        }
+          const descriptions = [
+            'A modern web application with clean architecture',
+            'Lightweight library for developers',
+            'Full-stack application with REST API',
+            'Command-line tool written in modern languages',
+            'Documentation and tutorial collection',
+            'Mobile-first responsive framework',
+            'Data analysis and visualization tools',
+            'Machine learning experiments and models',
+            'DevOps automation scripts and configurations',
+            'Open source contribution to the community'
+          ]
 
-        const loadCommits = async (fs, dir) => {
-          // Mock commits for now
-          return getMockCommits()
+          return descriptions[repoHash % descriptions.length]
         }
 
         const loadMockData = path => {
-          setFiles(getMockFiles(path))
+          const newFiles = getMockFiles(path)
+          setFiles(newFiles)
           setCurrentPath(path)
           // Only show README at root level
           if (path === '') {
@@ -1563,216 +1620,472 @@
           setSelectedCommit(null)
         }
 
-        const getMockFiles = (path = '') => {
-          const mockFileStructure = {
-            '': [
-              { name: 'README.md', type: 'file', size: '2.1 KB' },
-              { name: 'package.json', type: 'file', size: '1.3 KB' },
-              { name: 'src', type: 'directory', size: '-' },
-              { name: 'public', type: 'directory', size: '-' },
-              { name: '.gitignore', type: 'file', size: '234 B' },
-              { name: 'LICENSE', type: 'file', size: '1.1 KB' }
-            ],
-            src: [
-              { name: 'index.js', type: 'file', size: '1.8 KB' },
-              { name: 'components', type: 'directory', size: '-' },
-              { name: 'utils', type: 'directory', size: '-' },
-              { name: 'App.js', type: 'file', size: '3.2 KB' },
-              { name: 'styles.css', type: 'file', size: '2.4 KB' }
-            ],
-            'src/components': [
-              { name: 'Header.js', type: 'file', size: '1.1 KB' },
-              { name: 'Footer.js', type: 'file', size: '892 B' },
-              { name: 'Button.js', type: 'file', size: '654 B' }
-            ],
-            'src/utils': [
-              { name: 'helpers.js', type: 'file', size: '2.3 KB' },
-              { name: 'constants.js', type: 'file', size: '445 B' },
-              { name: 'api.js', type: 'file', size: '1.7 KB' }
-            ],
-            public: [
-              { name: 'index.html', type: 'file', size: '1.2 KB' },
-              { name: 'favicon.ico', type: 'file', size: '3.8 KB' },
-              { name: 'manifest.json', type: 'file', size: '298 B' },
-              { name: 'assets', type: 'directory', size: '-' }
-            ],
-            'public/assets': [
-              { name: 'logo.png', type: 'file', size: '12.4 KB' },
-              { name: 'background.jpg', type: 'file', size: '89.2 KB' },
-              { name: 'icons', type: 'directory', size: '-' }
-            ],
-            'public/assets/icons': [
-              { name: 'search.svg', type: 'file', size: '1.2 KB' },
-              { name: 'close.svg', type: 'file', size: '892 B' },
-              { name: 'menu.svg', type: 'file', size: '1.1 KB' }
-            ]
-          }
-
-          return mockFileStructure[path] || []
+        const isStaticWebsite = () => {
+          return files.some(
+            file => file.name === 'index.html' && file.type === 'file'
+          )
         }
 
-        const getMockReadme = () => `# ${repo.name}
+        const deployAsPWA = async () => {
+          setDeploying(true)
 
-This is a Git repository displayed through the Git Explore interface.
+          // Simple PWA deployment simulation
+          setTimeout(() => {
+            const indexContent = generateFileContent('index.html')
+            const pwaHtml = createPWAContent(indexContent)
+            const blob = new Blob([pwaHtml], { type: 'text/html' })
+            const url = URL.createObjectURL(blob)
 
-## Features
-- File browsing
-- README display
-- Commit history
-- Repository statistics
+            const newWindow = window.open(url, '_blank')
+            if (newWindow) {
+              alert(
+                '🚀 PWA deployed successfully! Opening ' +
+                  repo.name +
+                  ' in a new tab.'
+              )
+            } else {
+              alert('Please allow popups to deploy the PWA')
+            }
 
-## Installation
-\`\`\`bash
-git clone ${repo.url}
-cd ${repo.name}
-npm install
-\`\`\`
+            setDeploying(false)
+          }, 1000)
+        }
 
-## Usage
-Check out the source code and documentation for more information.`
+        const createPWAContent = originalContent => {
+          return (
+            '<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>' +
+            repo.name +
+            ' - PWA</title><style>body{margin:0;padding:20px;font-family:system-ui;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;min-height:100vh}.container{max-width:800px;margin:0 auto;text-align:center}.badge{background:rgba(255,255,255,0.1);border-radius:20px;padding:8px 16px;margin:20px 0;display:inline-block;font-size:12px}</style></head><body><div class="container"><h1>🚀 ' +
+            repo.name +
+            '</h1><div class="badge">✨ Progressive Web App</div><p>This static website has been deployed as a PWA from the Git repository.</p><div style="margin-top:40px;background:rgba(255,255,255,0.1);padding:20px;border-radius:10px"><h3>Original Content:</h3><pre>' +
+            originalContent.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+            '</pre></div></div></body></html>'
+          )
+        }
 
-        const getMockCommits = () => [
-          {
-            hash: 'a1b2c3d4e5f6789',
-            shortHash: 'a1b2c3d',
-            message: 'Initial commit',
-            author: 'Developer',
-            email: 'developer@example.com',
-            date: new Date().toISOString(),
-            avatar: 'https://github.com/identicons/1.png',
-            filesChanged: 3,
-            additions: 45,
-            deletions: 0,
-            files: [
+        const getMockFiles = (path = '') => {
+          // Generate different file structures based on repo name + URL
+          const repoSeed = (repo.name + repo.url).toLowerCase()
+          const repoHash = repoSeed
+            .split('')
+            .reduce((a, b) => a + b.charCodeAt(0), 0)
+
+          console.log(
+            'getMockFiles for',
+            repo.name,
+            'hash:',
+            repoHash,
+            'path:',
+            path
+          )
+
+          const variants = [
+            {
+              // JavaScript/React project with PWA support
+              '': [
+                { name: 'README.md', type: 'file', size: '2.1 KB' },
+                { name: 'package.json', type: 'file', size: '1.3 KB' },
+                { name: 'index.html', type: 'file', size: '3.4 KB' },
+                { name: 'src', type: 'directory', size: '-' },
+                { name: 'public', type: 'directory', size: '-' },
+                { name: '.gitignore', type: 'file', size: '234 B' },
+                { name: 'LICENSE', type: 'file', size: '1.1 KB' }
+              ],
+              src: [
+                { name: 'index.js', type: 'file', size: '1.8 KB' },
+                { name: 'components', type: 'directory', size: '-' },
+                { name: 'utils', type: 'directory', size: '-' },
+                { name: 'App.js', type: 'file', size: '3.2 KB' },
+                { name: 'styles.css', type: 'file', size: '2.4 KB' }
+              ],
+              'src/components': [
+                { name: 'Header.js', type: 'file', size: '1.1 KB' },
+                { name: 'Footer.js', type: 'file', size: '892 B' },
+                { name: 'Button.js', type: 'file', size: '654 B' }
+              ]
+            },
+            {
+              // Python project
+              '': [
+                { name: 'README.md', type: 'file', size: '1.8 KB' },
+                { name: 'requirements.txt', type: 'file', size: '456 B' },
+                { name: 'main.py', type: 'file', size: '2.7 KB' },
+                { name: 'src', type: 'directory', size: '-' },
+                { name: 'tests', type: 'directory', size: '-' },
+                { name: 'docs', type: 'directory', size: '-' },
+                { name: '.gitignore', type: 'file', size: '189 B' }
+              ],
+              src: [
+                { name: '__init__.py', type: 'file', size: '0 B' },
+                { name: 'models.py', type: 'file', size: '4.2 KB' },
+                { name: 'views.py', type: 'file', size: '3.1 KB' },
+                { name: 'utils.py', type: 'file', size: '1.9 KB' }
+              ],
+              tests: [
+                { name: '__init__.py', type: 'file', size: '0 B' },
+                { name: 'test_models.py', type: 'file', size: '2.3 KB' },
+                { name: 'test_views.py', type: 'file', size: '1.8 KB' }
+              ]
+            },
+            {
+              // Documentation project with static site
+              '': [
+                { name: 'README.md', type: 'file', size: '3.4 KB' },
+                { name: 'index.html', type: 'file', size: '2.8 KB' },
+                { name: 'docs', type: 'directory', size: '-' },
+                { name: 'examples', type: 'directory', size: '-' },
+                { name: 'LICENSE', type: 'file', size: '1.1 KB' },
+                { name: 'CONTRIBUTING.md', type: 'file', size: '987 B' }
+              ],
+              docs: [
+                { name: 'index.md', type: 'file', size: '2.1 KB' },
+                { name: 'api.md', type: 'file', size: '4.7 KB' },
+                { name: 'tutorial.md', type: 'file', size: '3.2 KB' },
+                { name: 'images', type: 'directory', size: '-' }
+              ],
+              examples: [
+                { name: 'basic.md', type: 'file', size: '1.5 KB' },
+                { name: 'advanced.md', type: 'file', size: '2.8 KB' },
+                { name: 'demo.html', type: 'file', size: '1.9 KB' }
+              ]
+            }
+          ]
+
+          const selectedVariant = variants[repoHash % variants.length]
+          return selectedVariant[path] || []
+        }
+
+        const getMockReadme = () => {
+          const repoSeed = (repo.name + repo.url).toLowerCase()
+          const repoHash = repoSeed
+            .split('')
+            .reduce((a, b) => a + b.charCodeAt(0), 0)
+
+          console.log('getMockReadme for', repo.name, 'hash:', repoHash)
+
+          const readmeVariants = [
+            // JavaScript/React README
+            `# ${repo.name}
+
+      A modern React application with a clean, responsive design.
+
+      ## 🚀 Features
+      - Modern React with Hooks
+      - Responsive design
+      - Component-based architecture
+      - CSS-in-JS styling
+
+      ## 📦 Installation
+      \`\`\`bash
+      git clone ${repo.url}
+      cd ${repo.name}
+      npm install
+      npm start
+      \`\`\`
+
+      ## 🛠️ Development
+      \`\`\`bash
+      npm run dev    # Start development server
+      npm test       # Run tests
+      npm run build  # Build for production
+      \`\`\``,
+
+            // Python README
+            `# ${repo.name}
+
+      A Python application built with modern best practices.
+
+      ## 🐍 Features
+      - Clean Python architecture
+      - Comprehensive test suite
+      - Type hints support
+      - Docker ready
+
+      ## 🔧 Setup
+      \`\`\`bash
+      git clone ${repo.url}
+      cd ${repo.name}
+      pip install -r requirements.txt
+      python main.py
+      \`\`\`
+
+      ## 🧪 Testing
+      \`\`\`bash
+      pytest tests/
+      python -m pytest --cov=src
+      \`\`\``,
+
+            // Documentation README
+            `# ${repo.name}
+
+      Comprehensive documentation and examples for developers.
+
+      ## 📚 Contents
+      - API documentation
+      - Tutorials and guides
+      - Code examples
+      - Best practices
+
+      ## 🚀 Quick Start
+      \`\`\`bash
+      git clone ${repo.url}
+      cd ${repo.name}
+      # Browse the docs/ directory for documentation
+      \`\`\`
+
+      ## 📖 Structure
+      - \`docs/\` - Main documentation
+      - \`examples/\` - Code examples
+      - \`CONTRIBUTING.md\` - How to contribute`
+          ]
+
+          return readmeVariants[repoHash % readmeVariants.length]
+        }
+
+        const getMockCommits = () => {
+          const repoSeed = (repo.name + repo.url).toLowerCase()
+          const repoHash = repoSeed
+            .split('')
+            .reduce((a, b) => a + b.charCodeAt(0), 0)
+
+          console.log('getMockCommits for', repo.name, 'hash:', repoHash)
+
+          const commitVariants = [
+            // JavaScript/React commits
+            [
               {
-                name: 'README.md',
-                status: 'added',
-                additions: 12,
-                deletions: 0
+                hash: 'a1b2c3d4e5f6789',
+                shortHash: 'a1b2c3d',
+                message: 'Initial commit',
+                author: 'Developer',
+                email: 'developer@example.com',
+                date: new Date().toISOString(),
+                avatar: 'https://github.com/identicons/1.png',
+                filesChanged: 3,
+                additions: 45,
+                deletions: 0,
+                files: [
+                  {
+                    name: 'README.md',
+                    status: 'added',
+                    additions: 12,
+                    deletions: 0
+                  },
+                  {
+                    name: 'package.json',
+                    status: 'added',
+                    additions: 18,
+                    deletions: 0
+                  },
+                  {
+                    name: '.gitignore',
+                    status: 'added',
+                    additions: 15,
+                    deletions: 0
+                  }
+                ]
               },
               {
-                name: 'package.json',
-                status: 'added',
-                additions: 18,
-                deletions: 0
+                hash: 'e4f5g6h7i8j9012',
+                shortHash: 'e4f5g6h',
+                message: 'Add main application components and styling',
+                author: 'Developer',
+                email: 'developer@example.com',
+                date: new Date(Date.now() - 86400000).toISOString(),
+                avatar: 'https://github.com/identicons/2.png',
+                filesChanged: 5,
+                additions: 127,
+                deletions: 8,
+                files: [
+                  {
+                    name: 'src/App.js',
+                    status: 'added',
+                    additions: 67,
+                    deletions: 0
+                  },
+                  {
+                    name: 'src/index.js',
+                    status: 'added',
+                    additions: 15,
+                    deletions: 0
+                  },
+                  {
+                    name: 'src/styles.css',
+                    status: 'added',
+                    additions: 38,
+                    deletions: 0
+                  },
+                  {
+                    name: 'package.json',
+                    status: 'modified',
+                    additions: 4,
+                    deletions: 2
+                  },
+                  {
+                    name: 'README.md',
+                    status: 'modified',
+                    additions: 3,
+                    deletions: 6
+                  }
+                ]
               },
               {
-                name: '.gitignore',
-                status: 'added',
-                additions: 15,
-                deletions: 0
+                hash: 'i7j8k9l0m1n2345',
+                shortHash: 'i7j8k9l',
+                message: 'Update documentation and fix responsive layout',
+                author: 'Contributor',
+                email: 'contributor@example.com',
+                date: new Date(Date.now() - 172800000).toISOString(),
+                avatar: 'https://github.com/identicons/3.png',
+                filesChanged: 2,
+                additions: 23,
+                deletions: 12,
+                files: [
+                  {
+                    name: 'README.md',
+                    status: 'modified',
+                    additions: 18,
+                    deletions: 7
+                  },
+                  {
+                    name: 'src/styles.css',
+                    status: 'modified',
+                    additions: 5,
+                    deletions: 5
+                  }
+                ]
+              },
+              {
+                hash: 'p4q5r6s7t8u9123',
+                shortHash: 'p4q5r6s',
+                message: 'Add component tests and CI configuration',
+                author: 'Developer',
+                email: 'developer@example.com',
+                date: new Date(Date.now() - 259200000).toISOString(),
+                avatar: 'https://github.com/identicons/1.png',
+                filesChanged: 4,
+                additions: 89,
+                deletions: 3,
+                files: [
+                  {
+                    name: 'src/components/Header.test.js',
+                    status: 'added',
+                    additions: 34,
+                    deletions: 0
+                  },
+                  {
+                    name: 'src/components/Button.test.js',
+                    status: 'added',
+                    additions: 28,
+                    deletions: 0
+                  },
+                  {
+                    name: '.github/workflows/ci.yml',
+                    status: 'added',
+                    additions: 25,
+                    deletions: 0
+                  },
+                  {
+                    name: 'package.json',
+                    status: 'modified',
+                    additions: 2,
+                    deletions: 3
+                  }
+                ]
               }
-            ]
-          },
-          {
-            hash: 'e4f5g6h7i8j9012',
-            shortHash: 'e4f5g6h',
-            message: 'Add main application components and styling',
-            author: 'Developer',
-            email: 'developer@example.com',
-            date: new Date(Date.now() - 86400000).toISOString(),
-            avatar: 'https://github.com/identicons/2.png',
-            filesChanged: 5,
-            additions: 127,
-            deletions: 8,
-            files: [
+            ],
+            // Python commits
+            [
               {
-                name: 'src/App.js',
-                status: 'added',
+                hash: 'x9y8z7w6v5u4321',
+                shortHash: 'x9y8z7w',
+                message: 'Initial Python project structure',
+                author: 'PyDev',
+                email: 'pydev@example.com',
+                date: new Date().toISOString(),
+                avatar: 'https://github.com/identicons/4.png',
+                filesChanged: 4,
                 additions: 67,
-                deletions: 0
-              },
+                deletions: 0,
+                files: [
+                  {
+                    name: 'README.md',
+                    status: 'added',
+                    additions: 15,
+                    deletions: 0
+                  },
+                  {
+                    name: 'main.py',
+                    status: 'added',
+                    additions: 23,
+                    deletions: 0
+                  },
+                  {
+                    name: 'requirements.txt',
+                    status: 'added',
+                    additions: 8,
+                    deletions: 0
+                  },
+                  {
+                    name: '.gitignore',
+                    status: 'added',
+                    additions: 21,
+                    deletions: 0
+                  }
+                ]
+              }
+            ],
+            // Documentation commits
+            [
               {
-                name: 'src/index.js',
-                status: 'added',
-                additions: 15,
-                deletions: 0
-              },
-              {
-                name: 'src/styles.css',
-                status: 'added',
-                additions: 38,
-                deletions: 0
-              },
-              {
-                name: 'package.json',
-                status: 'modified',
-                additions: 4,
-                deletions: 2
-              },
-              {
-                name: 'README.md',
-                status: 'modified',
-                additions: 3,
-                deletions: 6
+                hash: 'm5n4o3p2q1r0987',
+                shortHash: 'm5n4o3p',
+                message: 'Initial documentation structure',
+                author: 'DocWriter',
+                email: 'docs@example.com',
+                date: new Date().toISOString(),
+                avatar: 'https://github.com/identicons/6.png',
+                filesChanged: 5,
+                additions: 156,
+                deletions: 0,
+                files: [
+                  {
+                    name: 'README.md',
+                    status: 'added',
+                    additions: 34,
+                    deletions: 0
+                  },
+                  {
+                    name: 'docs/index.md',
+                    status: 'added',
+                    additions: 45,
+                    deletions: 0
+                  },
+                  {
+                    name: 'docs/api.md',
+                    status: 'added',
+                    additions: 67,
+                    deletions: 0
+                  },
+                  {
+                    name: 'CONTRIBUTING.md',
+                    status: 'added',
+                    additions: 23,
+                    deletions: 0
+                  },
+                  {
+                    name: 'LICENSE',
+                    status: 'added',
+                    additions: 21,
+                    deletions: 0
+                  }
+                ]
               }
             ]
-          },
-          {
-            hash: 'i7j8k9l0m1n2345',
-            shortHash: 'i7j8k9l',
-            message: 'Update documentation and fix responsive layout',
-            author: 'Contributor',
-            email: 'contributor@example.com',
-            date: new Date(Date.now() - 172800000).toISOString(),
-            avatar: 'https://github.com/identicons/3.png',
-            filesChanged: 2,
-            additions: 23,
-            deletions: 12,
-            files: [
-              {
-                name: 'README.md',
-                status: 'modified',
-                additions: 18,
-                deletions: 7
-              },
-              {
-                name: 'src/styles.css',
-                status: 'modified',
-                additions: 5,
-                deletions: 5
-              }
-            ]
-          },
-          {
-            hash: 'p4q5r6s7t8u9123',
-            shortHash: 'p4q5r6s',
-            message: 'Add component tests and CI configuration',
-            author: 'Developer',
-            email: 'developer@example.com',
-            date: new Date(Date.now() - 259200000).toISOString(),
-            avatar: 'https://github.com/identicons/1.png',
-            filesChanged: 4,
-            additions: 89,
-            deletions: 3,
-            files: [
-              {
-                name: 'src/components/Header.test.js',
-                status: 'added',
-                additions: 34,
-                deletions: 0
-              },
-              {
-                name: 'src/components/Button.test.js',
-                status: 'added',
-                additions: 28,
-                deletions: 0
-              },
-              {
-                name: '.github/workflows/ci.yml',
-                status: 'added',
-                additions: 25,
-                deletions: 0
-              },
-              {
-                name: 'package.json',
-                status: 'modified',
-                additions: 2,
-                deletions: 3
-              }
-            ]
-          }
-        ]
+          ]
+
+          return commitVariants[repoHash % commitVariants.length]
+        }
 
         if (loading) {
           return html`
@@ -1849,6 +2162,19 @@ Check out the source code and documentation for more information.`
                     <i class="fas fa-download"></i>
                     Clone
                   </button>
+                  ${isStaticWebsite() &&
+                  html`
+                    <button
+                      class="btn-pwa"
+                      onClick=${deployAsPWA}
+                      disabled=${deploying}
+                    >
+                      ${deploying
+                        ? html`<div class="loading-spinner"></div>`
+                        : html`<i class="fas fa-rocket"></i>`}
+                      ${deploying ? 'Deploying...' : 'Deploy as PWA'}
+                    </button>
+                  `}
                 </div>
               </div>
             </header>
